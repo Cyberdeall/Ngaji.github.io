@@ -1,23 +1,20 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <!-- Menghubungkan ke Manifest PWA -->
     <link rel="manifest" href="./manifest.json">
-    <meta name="theme-color" content="#000000">
+    <meta name="theme-color" content="#1e222b">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black">
-    <meta name="apple-mobile-web-app-title" content="NamaAplikasi">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Ngaos Al Falah">
  
     <meta charset="UTF-8">
-    <meta name="color-scheme" content="light">
+    <meta name="color-scheme" content="dark light">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LOGIN NGAOS AL FALAH PLOSO</title>
+    <title>NGAOS AL FALAH PLOSO - LOGIN & REGISTER</title>
 
-    <!-- FontAwesome Icons & Boxicons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
     
-    <!-- Clerk JS SDK -->
     <script
       async
       crossorigin="anonymous"
@@ -32,61 +29,62 @@
     <div class="background"></div>
 
     <div class="container">
-        <!-- FORM LOGIN -->
         <div class="form-box login">
             <form id="loginForm" novalidate>
                 <div class="logo">
-                    <img src="logo-alfalah.png" alt="Logo Al Falah" onerror="this.style.display='none';">
+                    <img src="logo-alfalah.png" alt="Logo Al Falah" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                    <i class="bx bxs-radio" style="display:none;"></i>
                 </div>
-                <h1>NGAOS AL FALAH PLOSO</h1>
-                <p class="subtitle">TAFSIR JALALAIN DAN SHAHIH BUKHORI</p>
-                
+                <h1>NGAOS AL FALAH</h1>
+                <p>Aplikasi Resmi Radio Kitab Kuning</p>
                 <div class="input-box">
-                    <input type="text" id="username" placeholder="Username / Email" autocomplete="username" required>
-                    <i class='bx bxs-user'></i>
-                </div>
-                <div class="input-box">
-                    <input type="password" id="password" placeholder="Password" autocomplete="current-password" required>
-                    <i class='bx bxs-lock-alt'></i>
-                </div>
-                
-                <div class="remember-box">
-                    <label><input type="checkbox" id="remember"> Remember Me</label>
-                </div>
-                
-                <button type="submit" class="btn">MASUK</button>
-                <p id="message" class="error-msg"></p>
-            </form>
-        </div>
-
-        <!-- FORM REGISTER -->
-        <div class="form-box register">
-            <form id="registerForm" novalidate>
-                <div class="logo">
-                    <img src="logo-alfalah.png" alt="Logo Al Falah" onerror="this.style.display='none';">
-                </div>
-                <h1>PENDAFTARAN</h1>
-                <p class="subtitle">BUAT AKUN NGAOS BARU</p>
-                
-                <div class="input-box">
-                    <input type="text" id="regUsername" placeholder="Username" required>
-                    <i class='bx bxs-user'></i>
-                </div>
-                <div class="input-box">
-                    <input type="email" id="regEmail" placeholder="Email" required>
+                    <input type="email" id="username" placeholder="Alamat Email" required autocomplete="username">
                     <i class='bx bxs-envelope'></i>
                 </div>
                 <div class="input-box">
-                    <input type="password" id="regPassword" placeholder="Password" required>
-                    <i class='bx bxs-lock-alt'></i>
+                    <input type="password" id="password" placeholder="Kata Sandi" required autocomplete="current-password">
+                    <i class='bx bxs-lock-alt toggle-password' title="Tampilkan/Sembunyikan Kata Sandi"></i>
                 </div>
-                
-                <button type="submit" class="btn">DAFTAR</button>
-                <p id="regMessage" class="error-msg"></p>
+                <div class="options-box">
+                    <label><input type="checkbox" id="remember"> Ingat Saya</label>
+                    <a href="#" class="forgot-link" id="forgotPasswordBtn">Lupa Sandi?</a>
+                </div>
+                <div id="message" class="error-msg-container"></div>
+                <button type="submit" class="btn" id="btnLogin">
+                    <span class="btn-text">MASUK</span>
+                    <span class="btn-spinner" style="display:none;"><i class="bx bx-loader-alt bx-spin"></i> Memproses...</span>
+                </button>
             </form>
         </div>
 
-        <!-- TOGGLE PANEL SLIDER -->
+        <div class="form-box register">
+            <form id="registerForm" novalidate>
+                <div class="logo">
+                    <img src="logo-alfalah.png" alt="Logo Al Falah" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                    <i class="bx bxs-radio" style="display:none;"></i>
+                </div>
+                <h1>DAFTAR AKUN</h1>
+                <p>Lengkapi Data Diri Anda</p>
+                <div class="input-box">
+                    <input type="email" id="regEmail" placeholder="Alamat Email" required autocomplete="email">
+                    <i class='bx bxs-envelope'></i>
+                </div>
+                <div class="input-box">
+                    <input type="text" id="regName" placeholder="Nama Lengkap" required autocomplete="name">
+                    <i class='bx bxs-user'></i>
+                </div>
+                <div class="input-box">
+                    <input type="password" id="regPassword" placeholder="Kata Sandi (Min. 8 Karakter)" required autocomplete="new-password">
+                    <i class='bx bxs-lock-alt toggle-password' title="Tampilkan/Sembunyikan Kata Sandi"></i>
+                </div>
+                <div id="regMessage" class="error-msg-container"></div>
+                <button type="submit" class="btn" id="btnRegister">
+                    <span class="btn-text">DAFTAR</span>
+                    <span class="btn-spinner" style="display:none;"><i class="bx bx-loader-alt bx-spin"></i> Memproses...</span>
+                </button>
+            </form>
+        </div>
+
         <div class="toggle-box">
             <div class="toggle-panel toggle-left">
                 <h1>Selamat Datang!</h1>
@@ -102,14 +100,7 @@
         </div>
     </div>
 
-    <!-- Script Konfigurasi & Aplikasi -->
     <script src="js/config.js"></script>
-    <script>
-      // Menghubungkan Publishable Key dari config.js ke tag Clerk SDK secara otomatis
-      if (typeof CONFIG !== 'undefined' && CONFIG.CLERK_PUBLISHABLE_KEY) {
-        document.getElementById('clerk-sdk').setAttribute('data-clerk-publishable-key', CONFIG.CLERK_PUBLISHABLE_KEY);
-      }
-    </script>
     <script src="js/crypto.js"></script>
     <script src="js/auth.js"></script>
     <script src="js/login.js"></script>
@@ -122,6 +113,6 @@
         });
       }
     </script>
-
 </body>
 </html>
+
