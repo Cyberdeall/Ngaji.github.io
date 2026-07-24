@@ -1,9 +1,9 @@
 // =========================================
 // SW.JS - Service Worker
-// Version 4.0.0 - Ngaos Al Falah Ploso
+// Version 4.1.0 - Ngaos Al Falah Ploso
 // =========================================
 
-const CACHE_NAME = 'ngaos-alfalah-v4.0.0';
+const CACHE_NAME = 'ngaos-alfalah-v4.1.0';
 
 // Daftar file yang wajib di-cache untuk mode offline PWA
 const ASSETS_TO_CACHE = [
@@ -13,6 +13,7 @@ const ASSETS_TO_CACHE = [
     './css/login.css',
     './js/config.js',
     './js/auth.js',
+    './js/crypto.js',
     './js/login.js',
     './manifest.json',
     './logo-alfalah.png'
@@ -61,7 +62,6 @@ self.addEventListener('fetch', (event) => {
     event.respondWith(
         fetch(event.request)
             .then((response) => {
-                // Simpan salinan terbaru ke cache jika respons valid
                 if (response && response.status === 200 && response.type === 'basic') {
                     const responseToCache = response.clone();
                     caches.open(CACHE_NAME).then((cache) => {
@@ -71,7 +71,6 @@ self.addEventListener('fetch', (event) => {
                 return response;
             })
             .catch(() => {
-                // Jika offline / koneksi terputus, ambil dari cache
                 return caches.match(event.request);
             })
     );
