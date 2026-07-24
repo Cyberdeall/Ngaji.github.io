@@ -12,14 +12,13 @@ const ASSETS_TO_CACHE = [
     './player.html',
     './css/login.css',
     './js/config.js',
-    './js/auth.js',
     './js/crypto.js',
+    './js/auth.js',
     './js/login.js',
     './manifest.json',
     './logo-alfalah.png'
 ];
 
-// 1. INSTALL EVENT (Caching aset dasar)
 self.addEventListener('install', (event) => {
     event.waitUntil(
         caches.open(CACHE_NAME).then((cache) => {
@@ -28,7 +27,6 @@ self.addEventListener('install', (event) => {
     );
 });
 
-// 2. ACTIVATE EVENT (Membersihkan cache versi lama)
 self.addEventListener('activate', (event) => {
     event.waitUntil(
         caches.keys().then((cacheNames) => {
@@ -44,7 +42,6 @@ self.addEventListener('activate', (event) => {
     );
 });
 
-// 3. FETCH EVENT (Network First untuk API & Dynamic Stream, Cache First untuk Statis)
 self.addEventListener('fetch', (event) => {
     const requestUrl = new URL(event.request.url);
 
@@ -58,7 +55,6 @@ self.addEventListener('fetch', (event) => {
         return;
     }
 
-    // Strategi Caching: Network First dengan Fallback ke Cache
     event.respondWith(
         fetch(event.request)
             .then((response) => {
