@@ -8,9 +8,8 @@
     <meta name="apple-mobile-web-app-title" content="Ngaos Al Falah">
  
     <meta charset="UTF-8">
-    <meta name="color-scheme" content="dark light">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NGAOS AL FALAH PLOSO - LOGIN & REGISTER</title>
+    <title>LOGIN NGAOS AL FALAH PLOSO</title>
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
@@ -30,57 +29,64 @@
 
     <div class="container">
         <div class="form-box login">
-            <form id="loginForm" novalidate>
-                <div class="logo">
-                    <img src="logo-alfalah.png" alt="Logo Al Falah" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
-                    <i class="bx bxs-radio" style="display:none;"></i>
+            <form id="loginForm">
+                <div class="logo-container">
+                    <img src="logo-alfalah.png" alt="Logo Al-Falah" class="app-logo">
                 </div>
-                <h1>NGAOS AL FALAH</h1>
-                <p>Aplikasi Resmi Radio Kitab Kuning</p>
+                <h1>Masuk</h1>
+                
                 <div class="input-box">
-                    <input type="email" id="username" placeholder="Alamat Email" required autocomplete="username">
+                    <input type="email" id="username" placeholder="Alamat Email" required autocomplete="email">
                     <i class='bx bxs-envelope'></i>
                 </div>
+                
                 <div class="input-box">
                     <input type="password" id="password" placeholder="Kata Sandi" required autocomplete="current-password">
-                    <i class='bx bxs-lock-alt toggle-password' title="Tampilkan/Sembunyikan Kata Sandi"></i>
+                    <i class='bx bxs-lock-alt'></i>
+                    <i class='bx bx-hide toggle-pwd' data-target="password"></i>
                 </div>
-                <div class="options-box">
+
+                <div class="forgot-link">
                     <label><input type="checkbox" id="remember"> Ingat Saya</label>
-                    <a href="#" class="forgot-link" id="forgotPasswordBtn">Lupa Sandi?</a>
                 </div>
-                <div id="message" class="error-msg-container"></div>
+
+                <div id="message" class="alert-box"></div>
+
                 <button type="submit" class="btn" id="btnLogin">
-                    <span class="btn-text">MASUK</span>
-                    <span class="btn-spinner" style="display:none;"><i class="bx bx-loader-alt bx-spin"></i> Memproses...</span>
+                    <span class="btn-text">Masuk</span>
+                    <span class="btn-loader hidden"><i class="fas fa-spinner fa-spin"></i></span>
                 </button>
             </form>
         </div>
 
         <div class="form-box register">
-            <form id="registerForm" novalidate>
-                <div class="logo">
-                    <img src="logo-alfalah.png" alt="Logo Al Falah" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
-                    <i class="bx bxs-radio" style="display:none;"></i>
+            <form id="registerForm">
+                <div class="logo-container">
+                    <img src="logo-alfalah.png" alt="Logo Al-Falah" class="app-logo">
                 </div>
-                <h1>DAFTAR AKUN</h1>
-                <p>Lengkapi Data Diri Anda</p>
+                <h1>Pendaftaran</h1>
+
+                <div class="input-box">
+                    <input type="text" id="regFullName" placeholder="Nama Lengkap" required autocomplete="name">
+                    <i class='bx bxs-user'></i>
+                </div>
+
                 <div class="input-box">
                     <input type="email" id="regEmail" placeholder="Alamat Email" required autocomplete="email">
                     <i class='bx bxs-envelope'></i>
                 </div>
+
                 <div class="input-box">
-                    <input type="text" id="regName" placeholder="Nama Lengkap" required autocomplete="name">
-                    <i class='bx bxs-user'></i>
+                    <input type="password" id="regPassword" placeholder="Kata Sandi (Min. 8 karakter)" required autocomplete="new-password">
+                    <i class='bx bxs-lock-alt'></i>
+                    <i class='bx bx-hide toggle-pwd' data-target="regPassword"></i>
                 </div>
-                <div class="input-box">
-                    <input type="password" id="regPassword" placeholder="Kata Sandi (Min. 8 Karakter)" required autocomplete="new-password">
-                    <i class='bx bxs-lock-alt toggle-password' title="Tampilkan/Sembunyikan Kata Sandi"></i>
-                </div>
-                <div id="regMessage" class="error-msg-container"></div>
+
+                <div id="regMessage" class="alert-box"></div>
+
                 <button type="submit" class="btn" id="btnRegister">
-                    <span class="btn-text">DAFTAR</span>
-                    <span class="btn-spinner" style="display:none;"><i class="bx bx-loader-alt bx-spin"></i> Memproses...</span>
+                    <span class="btn-text">Daftar Akun</span>
+                    <span class="btn-loader hidden"><i class="fas fa-spinner fa-spin"></i></span>
                 </button>
             </form>
         </div>
@@ -100,6 +106,25 @@
         </div>
     </div>
 
+    <div id="otpModal" class="modal-overlay hidden">
+        <div class="modal-card">
+            <i class='bx bx-mail-send modal-icon'></i>
+            <h2>Verifikasi Email</h2>
+            <p>Kode OTP 6-digit telah dikirimkan ke email Anda. Silakan periksa kotak masuk/spam.</p>
+            
+            <div class="otp-input-container">
+                <input type="text" id="otpCode" maxlength="6" placeholder="000000" autocomplete="one-time-code">
+            </div>
+
+            <div id="otpMessage" class="alert-box"></div>
+
+            <div class="modal-actions">
+                <button id="btnVerifyOtp" class="btn">Verifikasi & Lanjut</button>
+                <button id="btnCancelOtp" class="btn btn-secondary">Batal</button>
+            </div>
+        </div>
+    </div>
+
     <script src="js/config.js"></script>
     <script src="js/crypto.js"></script>
     <script src="js/auth.js"></script>
@@ -108,8 +133,8 @@
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
           navigator.serviceWorker.register('./sw.js')
-            .then(reg => console.log('Service Worker terdaftar!', reg))
-            .catch(err => console.log('Gagal mendaftarkan Service Worker:', err));
+            .then(reg => console.log('Service Worker Terdaftar!', reg))
+            .catch(err => console.log('Gagal daftar SW:', err));
         });
       }
     </script>
