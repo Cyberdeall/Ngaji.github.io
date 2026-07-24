@@ -4,6 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Ngaos Al Falah Ploso - Player</title>
+    
+    <link rel="manifest" href="./manifest.json">
+    <meta name="theme-color" content="#1e222b">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
         
@@ -20,7 +29,7 @@
             overflow-x: hidden;
         }
 
-        /* Base Container */
+        /* Base Container (Smartphone View - Presisi & Simetris) */
         .player-container {
             background: #232732; 
             width: 100%; 
@@ -28,307 +37,379 @@
             max-height: calc(100dvh - 48px);
             border-radius: 35px;
             padding: 25px 20px; 
-            box-shadow: 10px 10px 20px #14161c, -10px -10px 20px #323848; 
-            text-align: center; 
-            margin: auto; 
-            position: relative;
+            box-shadow: 10px 10px 20px #14161c, -10px -10px 20px #323848;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
+            align-items: center;
+            position: relative;
         }
 
-        .player-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-        .live-badge { color: #ff5722; font-weight: bold; letter-spacing: 2px; font-size: 14px; }
-        .btn-mini {
-            background: #232732; border: none; width: 40px; height: 40px; border-radius: 50%;
-            box-shadow: 4px 4px 8px #14161c, -4px -4px 8px #323848; cursor: pointer; display: flex; align-items: center; justify-content: center; position: relative;
-        }
-        
-        .circle-outer {
-            width: 170px; height: 170px; margin: 0 auto 10px auto; border-radius: 50%; background: #232732;
-            display: flex; align-items: center; justify-content: center; box-shadow: inset 8px 8px 16px #14161c, inset -8px -8px 16px #323848;
-            flex-shrink: 0;
-        }
-        .circle-inner {
-            width: 120px; height: 120px; border-radius: 50%; overflow: hidden; border: 4px solid #1a1d24;
-            box-shadow: 8px 8px 16px #14161c, -8px -8px 16px #323848; background: #232732; display: flex; align-items: center; justify-content: center;
-        }
-        .circle-inner img { width: 100%; height: 100%; object-fit: cover; display: block; border-radius: 50%; }
-        
-        /* Class Animasi Putar Piringan */
-        .rotating { 
-            -webkit-animation: spin 15s linear infinite; 
-            animation: spin 15s linear infinite; 
-        }
-        @-webkit-keyframes spin { 100% { -webkit-transform: rotate(360deg); } }
-        @keyframes spin { 100% { transform: rotate(360deg); } }
-
-        .radio-info h2 { color: #ffffff; font-size: 17px; margin-bottom: 4px; }
-        .radio-info p { color: #8a92a6; font-size: 12px; margin-bottom: 6px; }
-        .status-text { display: block; font-size: 12px; font-weight: 500; }
-        .text-muted { color: #ffe0b2; }
-        .text-connecting { color: #ffca28; }
-        .text-live { color: #4caf50; font-weight: bold; }
-
-        /* Audio Wave Visualizer */
-        .audio-wave {
+        /* Top Bar Header */
+        .top-bar {
+            width: 100%;
             display: flex;
-            align-items: flex-end;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #8a92a6;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .user-info i { color: #60a5fa; font-size: 16px; }
+
+        .btn-logout {
+            background: #232732;
+            border: none;
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            color: #ef4444;
+            font-size: 16px;
+            cursor: pointer;
+            box-shadow: 4px 4px 8px #14161c, -4px -4px 8px #323848;
+            display: flex;
             justify-content: center;
-            gap: 4px;
-            height: 18px;
-            margin-top: 4px;
-            opacity: 0.3;
-            transition: opacity 0.3s;
-        }
-        .audio-wave.active { opacity: 1; }
-        .audio-wave span {
-            width: 3px; background: #ff5722; border-radius: 3px; height: 4px;
-        }
-        .audio-wave.active span { animation: wave 0.8s ease-in-out infinite alternate; }
-        .audio-wave.active span:nth-child(1) { animation-delay: 0.1s; }
-        .audio-wave.active span:nth-child(2) { animation-delay: 0.3s; }
-        .audio-wave.active span:nth-child(3) { animation-delay: 0.5s; }
-        .audio-wave.active span:nth-child(4) { animation-delay: 0.2s; }
-        .audio-wave.active span:nth-child(5) { animation-delay: 0.4s; }
-
-        @keyframes wave {
-            0% { height: 4px; }
-            100% { height: 18px; }
+            align-items: center;
+            transition: all 0.2s ease;
         }
 
-        .progress-container { display: flex; align-items: center; justify-content: space-between; margin: 10px 0; }
-        .time-text { color: #8a92a6; font-size: 12px; }
-        .live-text { color: #ff5722; font-weight: bold; }
-        .slider-bar { flex: 1; height: 6px; background: #14161c; border-radius: 3px; margin: 0 12px; }
-        .slider-fill { height: 100%; background: linear-gradient(90deg, #ff5722, #ff7043); border-radius: 3px; width: 0%; transition: width 0.2s ease; }
-
-        .player-controls { display: flex; justify-content: space-evenly; align-items: center; margin-bottom: 10px; }
-        .btn-control {
-            background: #232732; border: none; width: 48px; height: 48px; border-radius: 50%;
-            box-shadow: 5px 5px 10px #14161c, -5px -5px 10px #323848; cursor: pointer; display: flex; align-items: center; justify-content: center;
-        }
-        .btn-main {
-            background: #ff5722; border: none; width: 65px; height: 65px; border-radius: 50%; 
-            box-shadow: 6px 6px 12px #14161c, -6px -6px 12px #323848; cursor: pointer; display: flex; align-items: center; justify-content: center;
-        }
-        .btn-main:active, .btn-control:active { transform: scale(0.93); }
-        
-        /* Control Volume */
-        .volume-container {
-            display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 12px;
-        }
-        .volume-icon { color: #8a92a6; font-size: 16px; cursor: pointer; }
-        .volume-slider {
-            -webkit-appearance: none; appearance: none; width: 110px; height: 5px; border-radius: 3px; background: #14161c; outline: none;
-        }
-        .volume-slider::-webkit-slider-thumb {
-            -webkit-appearance: none; appearance: none; width: 14px; height: 14px; border-radius: 50%; background: #ff5722; cursor: pointer; box-shadow: 2px 2px 4px #14161c;
+        .btn-logout:active {
+            box-shadow: inset 3px 3px 6px #14161c, inset -3px -3px 6px #323848;
         }
 
-        .logout-wrapper { text-align: center; }
-        .btn-logout { background: #c62828; border: none; color: white; padding: 10px 25px; border-radius: 20px; font-weight: bold; font-size: 12px; cursor: pointer; box-shadow: 4px 4px 8px #14161c; width: 100%; max-width: 180px; }
+        /* Album Artwork Section */
+        .album-art-container {
+            position: relative;
+            width: 170px;
+            height: 170px;
+            margin: 10px 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
 
-        .svg-icon { width: 18px; height: 18px; fill: #ff5722; }
-        .svg-icon-main { width: 24px; height: 24px; fill: #ffffff; }
+        .album-art {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 4px solid #232732;
+            box-shadow: 8px 8px 16px #14161c, -8px -8px 16px #323848;
+            transition: transform 0.5s ease;
+        }
 
-        .info-card { display: none; position: absolute; top: 70px; right: 20px; background: #232732; width: 220px; padding: 15px; border-radius: 15px; box-shadow: 5px 5px 15px #14161c, -5px -5px 15px #323848; text-align: left; z-index: 10; border: 1px solid #323848; }
-        .info-card p { color: #8a92a6; font-size: 11px; margin-bottom: 5px; line-height: 1.4; }
-        .info-card p strong { color: #fff; }
+        .album-art.playing {
+            animation: rotateAlbum 20s linear infinite;
+        }
+
+        @keyframes rotateAlbum {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Info Judul & Status */
+        .track-info {
+            text-align: center;
+            margin-bottom: 10px;
+            width: 100%;
+        }
+
+        .track-title {
+            color: #ffffff;
+            font-size: 16px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .track-sub {
+            color: #8a92a6;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(15, 23, 42, 0.6);
+            padding: 4px 12px;
+            border-radius: 20px;
+            margin-top: 8px;
+            font-size: 11px;
+            color: #94a3b8;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .dot-live {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #64748b;
+        }
+
+        .dot-live.active {
+            background: #22c55e;
+            box-shadow: 0 0 8px #22c55e;
+            animation: pulseDot 1.5s infinite;
+        }
+
+        @keyframes pulseDot {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+
+        /* Timer Stream */
+        .stream-timer {
+            color: #60a5fa;
+            font-size: 22px;
+            font-weight: 700;
+            margin: 8px 0;
+            font-family: 'Courier New', Courier, monospace;
+            letter-spacing: 1px;
+        }
+
+        /* Controller Buttons */
+        .controls {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            width: 100%;
+            margin-top: 5px;
+        }
+
+        .btn-ctrl {
+            background: #232732;
+            border: none;
+            border-radius: 50%;
+            color: #8a92a6;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 6px 6px 12px #14161c, -6px -6px 12px #323848;
+            transition: all 0.2s ease;
+        }
+
+        .btn-ctrl:active {
+            box-shadow: inset 4px 4px 8px #14161c, inset -4px -4px 8px #323848;
+            color: #60a5fa;
+        }
+
+        .btn-small { width: 48px; height: 48px; font-size: 18px; }
+        .btn-main { width: 68px; height: 68px; font-size: 26px; color: #60a5fa; }
+        .btn-main.playing { color: #ef4444; }
+
+        /* Speed Badge Indicator */
+        .speed-badge {
+            font-size: 10px;
+            font-weight: 800;
+            position: absolute;
+            bottom: 4px;
+            color: #60a5fa;
+        }
+
+        /* Helper Hidden */
+        .hidden { display: none !important; }
     </style>
 </head>
 <body>
 
     <div class="player-container">
-        <div class="player-header">
-            <span class="live-badge">● LIVE</span>
-            <button class="btn-mini" id="btnInfo" title="Informasi Aplikasi">
-                <svg class="svg-icon" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+        <div class="top-bar">
+            <div class="user-info">
+                <i class='bx bxs-user-circle'></i>
+                <span id="userDisplay">Pengguna</span>
+            </div>
+            <button class="btn-logout" id="btnLogout" title="Keluar">
+                <i class='bx bx-log-out'></i>
             </button>
         </div>
 
-        <div class="info-card" id="infoCard">
-            <p><strong>Aplikasi:</strong> Ngaos Al Falah Ploso</p>
-            <p><strong>Status:</strong> Siaran Langsung</p>
-            <p><strong>Fitur:</strong> Lockscreen Audio, Auto-Reconnect</p>
+        <div class="album-art-container">
+            <img src="logo-alfalah.png" alt="Logo Al-Falah" class="album-art" id="albumArt">
         </div>
 
-        <div>
-            <div class="circle-outer">
-                <div class="circle-inner">
-                    <img src="logo-alfalah.png" id="albumArt" alt="Logo Al Falah" onerror="this.src='https://via.placeholder.com/125/232732/ff5722?text=NGAOS'">
-                </div>
-            </div>
-
-            <div class="radio-info">
-                <h2 id="appTitle">NGAOS AL FALAH</h2>
-                <p id="appDesc">TAFSIR JALALAIN & BUKHARI</p>
-                <span class="status-text text-muted" id="statusIndicator">SIAP DIPUTAR</span>
-                
-                <div class="audio-wave" id="audioWave">
-                    <span></span><span></span><span></span><span></span><span></span>
-                </div>
+        <div class="track-info">
+            <div class="track-title" id="appTitle">NGAOS AL FALAH PLOSO</div>
+            <div class="track-sub" id="appSub">TAFSIR JALALAIN & SHAHIH BUKHARI</div>
+            
+            <div class="status-badge">
+                <div class="dot-live" id="dotLive"></div>
+                <span id="statusIndicator">OFFLINE</span>
             </div>
         </div>
 
-        <div class="progress-container">
-            <span class="time-text" id="streamTime">0:00</span>
-            <div class="slider-bar"><div class="slider-fill" id="sliderFill"></div></div>
-            <span class="live-text">LIVE</span>
-        </div>
+        <div class="stream-timer" id="streamTime">0:00</div>
 
-        <div class="player-controls">
-            <button class="btn-control" id="btnRewind" title="Klik: Mundur 10s | Tahan: Replay 30s">
-                <svg class="svg-icon" viewBox="0 0 24 24"><path d="M11 18V6l-8.5 6 8.5 6zm.5-6l8.5 6V6l-8.5 6z"/></svg>
+        <div class="controls">
+            <button class="btn-ctrl btn-small" id="btnRewind" title="Klik: Reset Kecepatan | Tahan: Replay 30 Detik">
+                <i class='bx bx-rewind'></i>
             </button>
-            <button class="btn-main" id="btnPlay">
-                <svg class="svg-icon-main" id="playIcon" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-            </button>
-            <button class="btn-control" id="btnForward" title="Klik: Speed 1.25x | Tahan: Catch-up Live">
-                <svg class="svg-icon" viewBox="0 0 24 24"><path d="M4 18l8.5-6L4 6v12zm9-12v12l8.5-6L13 6z"/></svg>
-            </button>
-        </div>
 
-        <div class="volume-container">
-            <span class="volume-icon" id="btnMute">🔊</span>
-            <input type="range" class="volume-slider" id="volumeSlider" min="0" max="1" step="0.05" value="1">
-        </div>
+            <button class="btn-ctrl btn-main" id="playBtn" title="Putar / Hentikan">
+                <i class='bx bx-play' id="playIcon"></i>
+            </button>
 
-        <div class="logout-wrapper">
-            <button class="btn-logout" id="btnLogout">KELUAR</button>
+            <button class="btn-ctrl btn-small" id="btnForward" style="position: relative;" title="Klik: Ubah Kecepatan | Tahan: Live Catch-Up">
+                <i class='bx bx-fast-forward'></i>
+                <span class="speed-badge" id="speedDisplay">1.0x</span>
+            </button>
         </div>
     </div>
 
     <script src="js/config.js"></script>
+    <script src="js/crypto.js"></script>
     <script src="js/auth.js"></script>
+
     <script>
         document.addEventListener("DOMContentLoaded", function() {
-            // Validasi Sesi Pengguna
+            // 1. PROTEKSI AKSES HALAMAN (WAJIB LOGIN)
             if (typeof Auth !== 'undefined' && !Auth.isSessionValid()) {
-                window.location.href = typeof CONFIG !== 'undefined' ? CONFIG.LOGIN_PAGE : "index.html";
+                window.location.href = CONFIG.LOGIN_PAGE || 'index.html';
                 return;
             }
 
-            const STREAM_URL = (typeof CONFIG !== 'undefined' && CONFIG.STREAM_URL) ? CONFIG.STREAM_URL : "https://b.alhastream.com:5125/radio";
-            let audio = null;
-            let isPlaying = false;
-            let reconnectAttempts = 0;
-            let reconnectTimer = null;
-            let timerInterval = null;
-            let secondsElapsed = 0;
+            // TAMPILKAN NAMA USER
+            const session = Auth.getSession();
+            const userDisplay = document.getElementById("userDisplay");
+            if (session && session.username) {
+                userDisplay.innerText = session.username;
+            }
 
-            const btnPlay = document.getElementById("btnPlay");
+            // 2. ELEMEN UI PLAYER
+            const playBtn = document.getElementById("playBtn");
             const playIcon = document.getElementById("playIcon");
             const albumArt = document.getElementById("albumArt");
+            const dotLive = document.getElementById("dotLive");
             const statusIndicator = document.getElementById("statusIndicator");
             const streamTime = document.getElementById("streamTime");
-            const sliderFill = document.getElementById("sliderFill");
-            const audioWave = document.getElementById("audioWave");
-            const volumeSlider = document.getElementById("volumeSlider");
-            const btnMute = document.getElementById("btnMute");
+            const speedDisplay = document.getElementById("speedDisplay");
             const btnLogout = document.getElementById("btnLogout");
-            const btnInfo = document.getElementById("btnInfo");
-            const infoCard = document.getElementById("infoCard");
 
-            // MEDIASESSION API (Layar Kunci HP Professional)
+            // ELEMEN INFORMASI TEKS DARI CONFIG
+            if (typeof CONFIG !== 'undefined') {
+                if (CONFIG.APP_NAME) document.getElementById("appTitle").innerText = CONFIG.APP_NAME;
+                if (CONFIG.APP_DESC) document.getElementById("appSub").innerText = CONFIG.APP_DESC;
+            }
+
+            // 3. VARIABEL STATE PLAYER
+            let audio = null;
+            let isPlaying = false;
+            let timerInterval = null;
+            let secondsElapsed = 0;
+            const speeds = [1.0, 1.25, 1.5, 2.0];
+            let speedIndex = 0;
+
+            const STREAM_URL = (typeof CONFIG !== 'undefined' && CONFIG.STREAM_URL) 
+                ? CONFIG.STREAM_URL 
+                : "https://b.alhastream.com:5125/radio";
+
+            // 4. SETUP MEDIASESSION API (KONTROL LAYAR KUNCI HP)
             function setupMediaSession() {
                 if ('mediaSession' in navigator) {
                     navigator.mediaSession.metadata = new MediaMetadata({
-                        title: typeof CONFIG !== 'undefined' ? CONFIG.APP_NAME : 'Ngaos Al Falah Ploso',
-                        artist: typeof CONFIG !== 'undefined' ? CONFIG.APP_DESC : 'Radio Live Streaming',
-                        album: 'Radio Kitab Kuning',
+                        title: CONFIG.APP_NAME || 'Ngaos Al Falah Ploso',
+                        artist: CONFIG.APP_DESC || 'Tafsir Jalalain & Shahih Bukhari',
+                        album: 'Al Falah Ploso Kediri',
                         artwork: [
-                            { src: 'logo-alfalah.png', sizes: '192x192', type: 'image/png' },
-                            { src: 'logo-alfalah.png', sizes: '512x512', type: 'image/png' }
+                            { src: 'icon-192.png', sizes: '192x192', type: 'image/png' },
+                            { src: 'icon-512.png', sizes: '512x512', type: 'image/png' }
                         ]
                     });
 
-                    navigator.mediaSession.setActionHandler('play', () => { if(!isPlaying) togglePlay(); });
-                    navigator.mediaSession.setActionHandler('pause', () => { if(isPlaying) togglePlay(); });
-                    navigator.mediaSession.setActionHandler('stop', () => { stopStreaming(); });
+                    navigator.mediaSession.setActionHandler('play', () => togglePlay());
+                    navigator.mediaSession.setActionHandler('pause', () => togglePlay());
+                    navigator.mediaSession.setActionHandler('stop', () => stopStreaming());
                 }
             }
 
-            function initAudio() {
-                if (!audio) {
-                    audio = new Audio();
-                    audio.crossOrigin = "anonymous";
-                    
-                    audio.addEventListener("playing", () => {
-                        isPlaying = true;
-                        reconnectAttempts = 0;
-                        statusIndicator.className = "status-text text-live";
-                        statusIndicator.innerText = "● LIVE STREAMING";
-                        albumArt.classList.add("rotating");
-                        audioWave.classList.add("active");
-                        sliderFill.style.width = "100%";
-                        playIcon.innerHTML = '<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>';
-                        startTimer();
-                        setupMediaSession();
-                    });
-
-                    audio.addEventListener("waiting", () => {
-                        statusIndicator.className = "status-text text-connecting";
-                        statusIndicator.innerText = "⏳ MENGHUBUNGKAN...";
-                    });
-
-                    audio.addEventListener("error", () => {
-                        handleAutoReconnect();
-                    });
-
-                    audio.addEventListener("stalled", () => {
-                        handleAutoReconnect();
-                    });
-                }
-            }
-
-            function handleAutoReconnect() {
-                if (!isPlaying) return;
-                reconnectAttempts++;
-                const delay = Math.min(20000, reconnectAttempts * 3000);
-                statusIndicator.className = "status-text text-connecting";
-                statusIndicator.innerText = `🔄 KONEKSI TERPUTUS. MENCOBA (${reconnectAttempts})...`;
-
-                clearTimeout(reconnectTimer);
-                reconnectTimer = setTimeout(() => {
-                    if (isPlaying && audio) {
-                        audio.src = STREAM_URL + "?cb=" + Date.now();
-                        audio.play().catch(() => {});
-                    }
-                }, delay);
-            }
-
+            // 5. MEMUTAR / MENGHENTIKAN STREAMING
             function togglePlay() {
-                initAudio();
                 if (!isPlaying) {
-                    statusIndicator.className = "status-text text-connecting";
-                    statusIndicator.innerText = "⏳ MENGHUBUNGKAN...";
-                    audio.src = STREAM_URL + "?cb=" + Date.now();
-                    audio.play().catch(err => {
-                        statusIndicator.className = "status-text text-muted";
-                        statusIndicator.innerText = "❌ GAGAL MEMUTAR";
-                    });
+                    startStreaming();
                 } else {
                     stopStreaming();
                 }
             }
 
-            function stopStreaming() {
-                isPlaying = false;
-                clearTimeout(reconnectTimer);
+            function startStreaming() {
+                statusIndicator.innerText = "MENGHUBUNGKAN...";
+                
+                // Hancurkan objek lama jika ada
                 if (audio) {
                     audio.pause();
                     audio.src = "";
+                    audio = null;
                 }
-                statusIndicator.className = "status-text text-muted";
-                statusIndicator.innerText = "DITERHENTIKAN";
-                albumArt.classList.remove("rotating");
-                audioWave.classList.remove("active");
-                sliderFill.style.width = "0%";
-                playIcon.innerHTML = '<path d="M8 5v14l11-7z"/>';
-                stopTimer();
+
+                // Inisialisasi Audio Baru dengan Anti-Cache Query
+                audio = new Audio(STREAM_URL + "?cb=" + Date.now());
+                audio.crossOrigin = "anonymous";
+                audio.playbackRate = speeds[speedIndex];
+
+                audio.play().then(() => {
+                    isPlaying = true;
+                    playIcon.className = "bx bx-pause";
+                    playBtn.classList.add("playing");
+                    albumArt.classList.add("playing");
+                    dotLive.classList.add("active");
+                    statusIndicator.innerText = "SIARAN LIVE";
+                    
+                    startTimer();
+                    setupMediaSession();
+
+                    if ('mediaSession' in navigator) {
+                        navigator.mediaSession.playbackState = "playing";
+                    }
+                }).catch(err => {
+                    console.error("Gagal memutar audio:", err);
+                    stopStreaming();
+                    statusIndicator.innerText = "GAGAL TERHUBUNG";
+                });
+
+                // AUTO-RECONNECT SAAT KONEKSI EROR
+                audio.onerror = function() {
+                    if (isPlaying) {
+                        statusIndicator.innerText = "MENYAMBUNG KEMBALI...";
+                        setTimeout(() => { if (isPlaying) startStreaming(); }, 3000);
+                    }
+                };
             }
 
+            function stopStreaming() {
+                if (audio) {
+                    audio.pause();
+                    audio.src = "";
+                    audio = null;
+                }
+                isPlaying = false;
+                playIcon.className = "bx bx-play";
+                playBtn.classList.remove("playing");
+                albumArt.classList.remove("playing");
+                dotLive.classList.remove("active");
+                statusIndicator.innerText = "OFFLINE";
+
+                stopTimer();
+
+                if ('mediaSession' in navigator) {
+                    navigator.mediaSession.playbackState = "none";
+                }
+            }
+
+            // 6. TIMER WAKTU MENDENGARKAN
             function startTimer() {
                 stopTimer();
                 secondsElapsed = 0;
@@ -341,45 +422,100 @@
             }
 
             function stopTimer() {
-                clearInterval(timerInterval);
+                if (timerInterval) clearInterval(timerInterval);
                 streamTime.innerText = "0:00";
             }
 
-            // EVENT LISTENERS
-            btnPlay.addEventListener("click", togglePlay);
+            // 7. PENANGANAN DUA AKSI (KLIK BIASA VS TAHAN TOMBOL)
+            function pasangFungsiDuaAksi(elemen, aksiKlik, aksiTahan) {
+                let timerTahan = null;
+                let sudahDiTahan = false;
 
-            volumeSlider.addEventListener("input", (e) => {
-                if (audio) audio.volume = e.target.value;
-                btnMute.innerText = e.target.value == 0 ? "🔇" : "🔊";
-            });
+                const mulai = () => {
+                    sudahDiTahan = false;
+                    timerTahan = setTimeout(() => {
+                        sudahDiTahan = true;
+                        if (aksiTahan) aksiTahan();
+                    }, 600); // Tahan selama 600ms
+                };
 
-            btnMute.addEventListener("click", () => {
-                if (audio) {
-                    if (audio.volume > 0) {
-                        audio.volume = 0;
-                        volumeSlider.value = 0;
-                        btnMute.innerText = "🔇";
+                const selesai = (e) => {
+                    clearTimeout(timerTahan);
+                    if (!sudahDiTahan) {
+                        if (e.type === 'touchend') e.preventDefault();
+                        if (aksiKlik) aksiKlik();
+                    }
+                };
+
+                elemen.addEventListener('mousedown', mulai);
+                elemen.addEventListener('mouseup', selesai);
+                elemen.addEventListener('touchstart', mulai, { passive: true });
+                elemen.addEventListener('touchend', selesai);
+            }
+
+            // TOMBOL REWIND (MUNDUR / RESET)
+            pasangFungsiDuaAksi(
+                document.getElementById("btnRewind"),
+                function aksiKlik() {
+                    speedIndex = 0;
+                    if (audio) audio.playbackRate = speeds[speedIndex];
+                    updateSpeedUI();
+                },
+                function aksiTahan() {
+                    if (audio && isPlaying) {
+                        audio.currentTime = Math.max(0, audio.currentTime - 30);
+                        statusIndicator.innerText = "↩ REPLAY 30s";
+                        setTimeout(() => { if (isPlaying) statusIndicator.innerText = "SIARAN LIVE"; }, 2000);
+                    }
+                }
+            );
+
+            // TOMBOL FORWARD (KECEPATAN / CATCH-UP)
+            pasangFungsiDuaAksi(
+                document.getElementById("btnForward"),
+                function aksiKlik() {
+                    speedIndex = (speedIndex + 1) % speeds.length;
+                    if (audio) audio.playbackRate = speeds[speedIndex];
+                    updateSpeedUI();
+                },
+                function aksiTahan() {
+                    if (isPlaying) {
+                        speedIndex = 0;
+                        updateSpeedUI();
+                        startStreaming(); // Catch-up langsung ke live stream terbaru
+                        statusIndicator.innerText = "⚡ CATCH-UP LIVE";
+                    }
+                }
+            );
+
+            function updateSpeedUI() {
+                speedDisplay.innerText = speeds[speedIndex] + "x";
+            }
+
+            // 8. EVENT LISTENER TOMBOL UTAMA
+            playBtn.addEventListener("click", togglePlay);
+
+            btnLogout.addEventListener("click", function() {
+                if (confirm("Apakah Anda yakin ingin keluar dari aplikasi?")) {
+                    stopStreaming();
+                    if (typeof Auth !== 'undefined') {
+                        Auth.logout();
                     } else {
-                        audio.volume = 1;
-                        volumeSlider.value = 1;
-                        btnMute.innerText = "🔊";
+                        localStorage.removeItem("radio_session");
+                        window.location.href = "index.html";
                     }
                 }
             });
-
-            btnInfo.addEventListener("click", () => {
-                infoCard.style.display = infoCard.style.display === "block" ? "none" : "block";
-            });
-
-            btnLogout.addEventListener("click", () => {
-                stopStreaming();
-                if (typeof Auth !== 'undefined') {
-                    Auth.logout();
-                } else {
-                    window.location.href = "index.html";
-                }
-            });
         });
+
+        // REGISTER SERVICE WORKER
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(reg => console.log('SW Terdaftar di Player!', reg))
+                    .catch(err => console.log('Gagal SW Player:', err));
+            });
+        }
     </script>
 </body>
 </html>
