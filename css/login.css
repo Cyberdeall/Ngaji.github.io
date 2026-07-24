@@ -1,5 +1,5 @@
 /* =========================================
-   LOGIN.CSS - Final Complete Version
+   LOGIN.CSS - Final Fixed Version
    Ngaos Al Falah Ploso
    ========================================= */
 
@@ -125,6 +125,7 @@ form {
     box-shadow: inset 5px 5px 10px #14161c, inset -5px -5px 10px #323848;
 }
 
+/* Ikon standar (Email, Username, dll) di posisi kanan 20px */
 .input-box i {
     position: absolute;
     right: 20px;
@@ -134,20 +135,46 @@ form {
     color: #8a92a6;
 }
 
-/* Penyesuaian Ikon Mata Toggle Password agar Presisi & Tidak Overlap */
-.input-box i.toggle-pwd {
-    right: 18px;
+/* =========================================================
+   PERBAIKAN POSISI IKON GEMBOK & MATA (SHOW/HIDE PASSWORD)
+   ========================================================= */
+
+/* 1. Ikon Mata Toggle Password di Paling Kanan (18px) */
+.input-box i.toggle-pwd,
+.input-box i.toggle-password,
+.input-box i.bx-hide,
+.input-box i.bx-show,
+.input-box i.fa-eye,
+.input-box i.fa-eye-slash {
+    right: 18px !important;
     cursor: pointer;
     transition: color 0.3s ease;
-    z-index: 2;
+    z-index: 10;
 }
 
-.input-box i.toggle-pwd:hover {
+.input-box i.toggle-pwd:hover,
+.input-box i.toggle-password:hover,
+.input-box i.bx-hide:hover,
+.input-box i.bx-show:hover {
     color: #ffffff;
 }
 
-.input-box input[type="password"] {
-    padding-right: 48px;
+/* 2. Ikon Gembok Digeser ke Sebelah Kiri Ikon Mata (48px) */
+.input-box i.bxs-lock-alt,
+.input-box i.bxs-lock,
+.input-box i.fa-lock {
+    right: 48px !important;
+    z-index: 5;
+}
+
+/* 3. Ruang Ketik Password Perluas (75px) agar Teks Tidak Tertimpa Kedua Ikon */
+/* Berlaku baik saat password tersembunyi maupun saat ditampilkan sebagai teks */
+.input-box input[type="password"],
+.input-box:has(i.toggle-pwd) input,
+.input-box:has(i.bx-hide) input,
+.input-box:has(i.bx-show) input,
+.input-box:has(i.toggle-password) input {
+    padding-right: 75px !important;
 }
 
 /* Checkbox Ingat Saya */
