@@ -53,7 +53,8 @@ document.addEventListener("DOMContentLoaded", async function() {
             tampilkanError(messageOutput, "Gagal memuat SDK Keamanan. Periksa koneksi internet Anda.");
             return false;
         }
-        if (!window.Clerk.isReady()) {
+        // PERBAIKAN: Mengganti .isReady() yang sudah kedaluwarsa dengan properti .loaded
+        if (!window.Clerk.loaded) {
             await window.Clerk.load({ publishableKey: CONFIG.CLERK_PUBLISHABLE_KEY });
         }
         return true;
@@ -270,4 +271,3 @@ document.addEventListener("DOMContentLoaded", async function() {
         }
     }
 });
-
