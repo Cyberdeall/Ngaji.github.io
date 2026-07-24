@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <!-- Menghubungkan ke Manifest PWA -->
+    <link rel="manifest" href="./manifest.json">
+    <meta name="theme-color" content="#000000">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="apple-mobile-web-app-title" content="NamaAplikasi">
+ 
+    <meta charset="UTF-8">
+    <meta name="color-scheme" content="light">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LOGIN NGAOS AL FALAH PLOSO</title>
+
+    <!-- FontAwesome Icons & Boxicons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    
+    <!-- Clerk JS SDK -->
+    <script
+      async
+      crossorigin="anonymous"
+      id="clerk-sdk"
+      src="https://cdn.jsdelivr.net/npm/@clerk/clerk-js@latest/dist/clerk.browser.js">
+    </script>
+
+    <link rel="stylesheet" href="css/login.css">
+</head>
+<body>
+
+    <div class="background"></div>
+
+    <div class="container">
+        <!-- FORM LOGIN -->
+        <div class="form-box login">
+            <form id="loginForm" novalidate>
+                <div class="logo">
+                    <img src="logo-alfalah.png" alt="Logo Al Falah" onerror="this.style.display='none';">
+                </div>
+                <h1>NGAOS AL FALAH PLOSO</h1>
+                <p class="subtitle">TAFSIR JALALAIN DAN SHAHIH BUKHORI</p>
+                
+                <div class="input-box">
+                    <input type="text" id="username" placeholder="Username / Email" autocomplete="username" required>
+                    <i class='bx bxs-user'></i>
+                </div>
+                <div class="input-box">
+                    <input type="password" id="password" placeholder="Password" autocomplete="current-password" required>
+                    <i class='bx bxs-lock-alt'></i>
+                </div>
+                
+                <div class="remember-box">
+                    <label><input type="checkbox" id="remember"> Remember Me</label>
+                </div>
+                
+                <button type="submit" class="btn">MASUK</button>
+                <p id="message" class="error-msg"></p>
+            </form>
+        </div>
+
+        <!-- FORM REGISTER -->
+        <div class="form-box register">
+            <form id="registerForm" novalidate>
+                <div class="logo">
+                    <img src="logo-alfalah.png" alt="Logo Al Falah" onerror="this.style.display='none';">
+                </div>
+                <h1>PENDAFTARAN</h1>
+                <p class="subtitle">BUAT AKUN NGAOS BARU</p>
+                
+                <div class="input-box">
+                    <input type="text" id="regUsername" placeholder="Username" required>
+                    <i class='bx bxs-user'></i>
+                </div>
+                <div class="input-box">
+                    <input type="email" id="regEmail" placeholder="Email" required>
+                    <i class='bx bxs-envelope'></i>
+                </div>
+                <div class="input-box">
+                    <input type="password" id="regPassword" placeholder="Password" required>
+                    <i class='bx bxs-lock-alt'></i>
+                </div>
+                
+                <button type="submit" class="btn">DAFTAR</button>
+                <p id="regMessage" class="error-msg"></p>
+            </form>
+        </div>
+
+        <!-- TOGGLE PANEL SLIDER -->
+        <div class="toggle-box">
+            <div class="toggle-panel toggle-left">
+                <h1>Selamat Datang!</h1>
+                <p>Belum memiliki akun Ngaos Al Falah Ploso?</p>
+                <button class="btn register-btn">Daftar Akun</button>
+            </div>
+
+            <div class="toggle-panel toggle-right">
+                <h1>Sampun Gadah Akun?</h1>
+                <p>Silakan masuk jika Anda sudah terdaftar.</p>
+                <button class="btn login-btn">Masuk</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Script Konfigurasi & Aplikasi -->
+    <script src="js/config.js"></script>
+    <script>
+      // Menghubungkan Publishable Key dari config.js ke tag Clerk SDK secara otomatis
+      if (typeof CONFIG !== 'undefined' && CONFIG.CLERK_PUBLISHABLE_KEY) {
+        document.getElementById('clerk-sdk').setAttribute('data-clerk-publishable-key', CONFIG.CLERK_PUBLISHABLE_KEY);
+      }
+    </script>
+    <script src="js/crypto.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/login.js"></script>
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('./sw.js')
+            .then(reg => console.log('Service Worker terdaftar!', reg))
+            .catch(err => console.log('Gagal mendaftarkan Service Worker:', err));
+        });
+      }
+    </script>
+
+</body>
+</html>

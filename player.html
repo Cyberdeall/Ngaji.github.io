@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Ngaos Al Falah Ploso - Player</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+        
+        body { 
+            background: #1e222b; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            min-height: 100vh; 
+            min-height: 100dvh; 
+            padding: 24px; 
+            -webkit-user-select: none; 
+            user-select: none; 
+            overflow-x: hidden;
+        }
+
+        /* Base Container (Smartphone View - Presisi & Simetris) */
+        .player-container {
+            background: #232732; 
+            width: 100%; 
+            max-width: 360px;
+            max-height: calc(100dvh - 48px);
+            border-radius: 35px;
+            padding: 25px 20px; 
+            box-shadow: 10px 10px 20px #14161c, -10px -10px 20px #323848; 
+            text-align: center; 
+            margin: auto; 
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .player-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .live-badge { color: #ff5722; font-weight: bold; letter-spacing: 2px; font-size: 14px; }
+        .btn-mini {
+            background: #232732; border: none; width: 40px; height: 40px; border-radius: 50%;
+            box-shadow: 4px 4px 8px #14161c, -4px -4px 8px #323848; cursor: pointer; display: flex; align-items: center; justify-content: center; position: relative;
+        }
+        
+        .circle-outer {
+            width: 180px; height: 180px; margin: 0 auto 15px auto; border-radius: 50%; background: #232732;
+            display: flex; align-items: center; justify-content: center; box-shadow: inset 8px 8px 16px #14161c, inset -8px -8px 16px #323848;
+            flex-shrink: 0;
+        }
+        .circle-inner {
+            width: 125px; height: 125px; border-radius: 50%; overflow: hidden; border: 4px solid #1a1d24;
+            box-shadow: 8px 8px 16px #14161c, -8px -8px 16px #323848; background: #232732; display: flex; align-items: center; justify-content: center;
+        }
+        .circle-inner img { width: 100%; height: 100%; object-fit: cover; display: block; border-radius: 50%; }
+        
+        /* Class Animasi Putar Piringan */
+        .rotating { 
+            -webkit-animation: spin 15s linear infinite; 
+            animation: spin 15s linear infinite; 
+        }
+        @-webkit-keyframes spin { 100% { -webkit-transform: rotate(360deg); } }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+
+        .radio-info h2 { color: #ffffff; font-size: 18px; margin-bottom: 4px; }
+        .radio-info p { color: #8a92a6; font-size: 12px; margin-bottom: 10px; }
+        .status-text { display: block; font-size: 13px; font-weight: 500; }
+        .text-muted { color: #ffe0b2; }
+        .text-connecting { color: #ffca28; }
+        .text-live { color: #4caf50; font-weight: bold; }
+
+        .progress-container { display: flex; align-items: center; justify-content: space-between; margin: 15px 0; }
+        .time-text { color: #8a92a6; font-size: 12px; }
+        .live-text { color: #ff5722; font-weight: bold; }
+        .slider-bar { flex: 1; height: 6px; background: #14161c; border-radius: 3px; margin: 0 12px; }
+        .slider-fill { height: 100%; background: linear-gradient(90deg, #ff5722, #ff7043); border-radius: 3px; width: 0%; transition: width 0.2s ease; }
+
+        .player-controls { display: flex; justify-content: space-evenly; align-items: center; margin-bottom: 15px; }
+        .btn-control {
+            background: #232732; border: none; width: 50px; height: 50px; border-radius: 50%;
+            box-shadow: 5px 5px 10px #14161c, -5px -5px 10px #323848; cursor: pointer; display: flex; align-items: center; justify-content: center;
+        }
+        .btn-main {
+            background: #ff5722; border: none; width: 70px; height: 70px; border-radius: 50%; 
+            box-shadow: 6px 6px 12px #14161c, -6px -6px 12px #323848; cursor: pointer; display: flex; align-items: center; justify-content: center;
+        }
+        .btn-main:active, .btn-control:active { transform: scale(0.93); }
+        
+        .logout-wrapper { text-align: center; }
+        .btn-logout { background: #c62828; border: none; color: white; padding: 10px 25px; border-radius: 20px; font-weight: bold; font-size: 12px; cursor: pointer; box-shadow: 4px 4px 8px #14161c; width: 100%; max-width: 180px; }
+        
+        .svg-icon { width: 18px; height: 18px; fill: #ff5722; }
+        .svg-icon-main { width: 24px; height: 24px; fill: #ffffff; }
+        .spin-loading { animation: svg-spin 1s linear infinite; -webkit-animation: svg-spin 1s linear infinite; }
+        @keyframes svg-spin { 100% { transform: rotate(360deg); } }
+        @-webkit-keyframes svg-spin { 100% { -webkit-transform: rotate(360deg); } }
+
+        .info-card {
+            display: none; position: absolute; top: 70px; right: 20px; background: #232732; width: 200px;
+            padding: 15px; border-radius: 20px; box-shadow: 6px 6px 15px #14161c, -6px -6px 15px #323848;
+            z-index: 10; text-align: left; border: 1px solid #2a2f3d;
+        }
+        .info-card p { color: #8a92a6; font-size: 11px; margin-bottom: 4px; }
+        .info-card h4 { color: #ffffff; font-size: 14px; font-weight: bold; word-break: break-all; }
+
+        /* =========================================================
+           DESKTOP MODE (Spotify Style Landscape Layout)
+           ========================================================= */
+        @media (min-width: 768px) {
+            .player-container {
+                max-width: 680px;
+                max-height: none;
+                display: grid;
+                grid-template-columns: 240px 1fr;
+                gap: 25px;
+                padding: 30px;
+                text-align: left;
+                align-items: center;
+            }
+
+            .player-left {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+            }
+
+            .circle-outer {
+                width: 220px;
+                height: 220px;
+                margin: 0;
+            }
+
+            .circle-inner {
+                width: 150px;
+                height: 150px;
+            }
+
+            .player-right {
+                display: flex;
+                flex-direction: column;
+                justify-content: space-between;
+                height: 100%;
+            }
+
+            .radio-info {
+                text-align: left;
+            }
+
+            .info-card {
+                top: 65px;
+                right: 30px;
+            }
+
+            .btn-logout {
+                width: auto;
+            }
+
+            .logout-wrapper {
+                text-align: right;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="player-container">
+        <!-- Kolom Kiri (Desktop) / Atas (Mobile) -->
+        <div class="player-left">
+            <div class="circle-outer">
+                <div class="circle-inner">
+                    <img src="logo-alfalah.png" alt="Logo" id="radioCover">
+                </div>
+            </div>
+        </div>
+
+        <!-- Kolom Kanan (Desktop) / Bawah (Mobile) -->
+        <div class="player-right">
+            <div class="player-header">
+                <button class="btn-mini" onclick="fiturSembuhkanAliran()" title="Segarkan Aliran Audio">
+                    <svg class="svg-icon" viewBox="0 0 24 24"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
+                </button>
+                <span class="live-badge" id="lblSpeed">LIVE 1.0x</span>
+                <button class="btn-mini" onclick="toggleInfoAkun()" title="Informasi Pengguna">
+                    <svg class="svg-icon" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+                </button>
+            </div>
+
+            <div class="info-card" id="popInfo">
+                <p>LOGIN SEBAGAI:</p>
+                <h4 id="txtUserAktif">-</h4>
+                <p style="margin-top: 10px;">STATUS SESI:</p>
+                <h4 style="color: #4caf50;">TERVERIFIKASI</h4>
+            </div>
+
+            <div class="radio-info">
+                <h2>NGAOS AL FALAH PLOSO</h2>
+                <p>TAFSIR JALALAIN & SHAHIH BUKHARI</p>
+                <span id="statusIndicator" class="status-text text-muted">Klik Play untuk Mendengar</span>
+            </div>
+
+            <div class="progress-container">
+                <span class="time-text" id="streamTime">0:00</span>
+                <div class="slider-bar"><div class="slider-fill" id="speedIndicator" style="width: 50%;"></div></div>
+                <span class="time-text live-text">Live</span>
+            </div>
+
+            <div class="player-controls">
+                <button class="btn-control" id="btnBack">
+                    <svg class="svg-icon" viewBox="0 0 24 24"><path d="M11 18V6l-8.5 6 8.5 6zm.5-6l8.5 6V6l-8.5 6z"/></svg>
+                </button>
+                <button class="btn-main" id="playBtn" onclick="toggleRadio()">
+                    <g id="playIconContainer">
+                        <svg class="svg-icon-main" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                    </g>
+                </button>
+                <button class="btn-control" id="btnForward">
+                    <svg class="svg-icon" viewBox="0 0 24 24"><path d="M4 18l8.5-6L4 6v12zm9-12v12l8.5-6L13 6z"/></svg>
+                </button>
+            </div>
+
+            <div class="logout-wrapper">
+                <button class="btn-logout" onclick="prosesLogoutKeamanan()">LOGOUT</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/config.js"></script>
+    <script src="js/crypto.js"></script>
+    <script src="js/users.js"></script>
+    <script src="js/auth.js"></script>
+
+    <script>
+        // PROTEKSI ANTI-BYPASS SERVER & PARSING NAMA AKUN AKTIF
+        let namaAkunTerbaca = "Penyiar";
+        if (typeof Auth !== 'undefined') { 
+            Auth.protectPage(); 
+            try {
+                const dataSesi = JSON.parse(localStorage.getItem(CONFIG.SESSION_KEY));
+                if (dataSesi) namaAkunTerbaca = dataSesi.username;
+            } catch(e){}
+        } else {
+            if (!localStorage.getItem(CONFIG.SESSION_KEY)) { window.location.href = CONFIG.LOGIN_PAGE; }
+        }
+        document.getElementById("txtUserAktif").innerText = namaAkunTerbaca.toUpperCase();
+
+        const STREAM_URL = CONFIG.STREAM_URL;
+        let audio = null, isPlaying = false, timerInterval = null, secondsElapsed = 0;
+        let speedIndex = 2; 
+        const speeds = [0.75, 0.85, 1.0, 1.25, 1.5];
+        
+        let intervalCekServerStandby = null;
+        let tombolPlayPernahDiklik = false;
+
+        const statusIndicator = document.getElementById("statusIndicator");
+        const radioCover = document.getElementById("radioCover");
+        const streamTime = document.getElementById("streamTime");
+        const playIconContainer = document.getElementById("playIconContainer");
+        const speedIndicator = document.getElementById("speedIndicator");
+        const lblSpeed = document.getElementById("lblSpeed");
+
+        const SVG_PLAY = `<svg class="svg-icon-main" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>`;
+        const SVG_PAUSE = `<svg class="svg-icon-main" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>`;
+        const SVG_LOADING = `<svg class="svg-icon-main spin-loading" viewBox="0 0 24 24"><path d="M12 4V2C6.48 2 2 6.48 2 12h2c0-4.41 3.59-8 8-8zm0 14c4.41 0 8-3.59 8-8h2c0 5.52-4.48 10-10 10v-2z"/></svg>`;
+
+        function toggleRadio() { 
+            if (!isPlaying) { 
+                tombolPlayPernahDiklik = true;
+                startStreaming(); 
+            } else { 
+                tombolPlayPernahDiklik = false;
+                stopStreaming(); 
+            } 
+        }
+
+        function startStreaming() {
+            statusIndicator.innerText = "Menghubungkan...";
+            statusIndicator.className = "status-text text-connecting";
+            playIconContainer.innerHTML = SVG_LOADING;
+            
+            // Hapus animasi saat proses memuat
+            radioCover.classList.remove("rotating");
+
+            audio = new Audio(STREAM_URL + "?user=" + namaAkunTerbaca + "&cb=" + Date.now());
+            
+            if ('mediaSession' in navigator) {
+                navigator.mediaSession.metadata = new MediaMetadata({
+                    title: CONFIG.APP_NAME,
+                    artist: CONFIG.APP_DESC,
+                    artwork: [{ src: 'logo-alfalah.png', sizes: '512x512', type: 'image/png' }]
+                });
+                navigator.mediaSession.setActionHandler('play', startStreaming);
+                navigator.mediaSession.setActionHandler('pause', stopStreaming);
+            }
+
+            audio.play().then(() => {
+                isPlaying = true;
+                statusIndicator.innerText = "🔴 LIVE STREAMING";
+                statusIndicator.className = "status-text text-live";
+                playIconContainer.innerHTML = SVG_PAUSE;
+                
+                // HANYA PUTAR LOGO KETIKA AUDIO TELAH BERBUNYI
+                radioCover.classList.add("rotating"); 
+                
+                audio.playbackRate = speeds[speedIndex]; 
+                startTimer();
+                updateSpeedUI();
+                
+                clearInterval(intervalCekServerStandby);
+                intervalCekServerStandby = null;
+            }).catch(err => {
+                statusIndicator.innerText = "Siaran Offline / Standby Menunggu...";
+                statusIndicator.className = "status-text text-muted";
+                playIconContainer.innerHTML = SVG_LOADING;
+                
+                radioCover.classList.remove("rotating");
+                
+                if (tombolPlayPernahDiklik && !intervalCekServerStandby) {
+                    mulaiMesinStimulanOtomatis();
+                }
+            });
+        }
+
+        function stopStreaming() {
+            clearInterval(intervalCekServerStandby);
+            intervalCekServerStandby = null;
+            if (audio) { audio.pause(); audio.src = ""; audio.load(); audio = null; }
+            isPlaying = false; 
+            statusIndicator.innerText = "Siaran Dihentikan";
+            statusIndicator.className = "status-text text-muted";
+            playIconContainer.innerHTML = SVG_PLAY; 
+            
+            // HENTIKAN PUTARAN LOGO
+            radioCover.classList.remove("rotating");
+            
+            stopTimer();
+        }
+
+        function mulaiMesinStimulanOtomatis() {
+            const statusUrl = CONFIG.STREAM_URL.replace("/radio", "/status-json.xsl");
+            
+            intervalCekServerStandby = setInterval(() => {
+                if (!tombolPlayPernahDiklik) { clearInterval(intervalCekServerStandby); return; }
+                
+                fetch(statusUrl + "?cb=" + Date.now())
+                .then(res => res.json())
+                .then(data => {
+                    let encoderSudahAktif = false;
+                    if (data && data.icestats && data.icestats.source) {
+                        encoderSudahAktif = true;
+                    }
+                    
+                    if (encoderSudahAktif) {
+                        clearInterval(intervalCekServerStandby);
+                        intervalCekServerStandby = null;
+                        if (audio) { audio.pause(); audio.src = ""; audio.load(); }
+                        setTimeout(() => { startStreaming(); }, 500);
+                    }
+                })
+                .catch(e => console.log("Menunggu server online..."));
+            }, 15000);
+        }
+
+        function fiturSembuhkanAliran() { stopStreaming(); setTimeout(() => { startStreaming(); }, 400); }
+
+        function toggleInfoAkun() {
+            const card = document.getElementById("popInfo");
+            card.style.display = (card.style.display === "block") ? "none" : "block";
+        }
+
+        function updateSpeedUI() {
+            lblSpeed.innerText = "LIVE " + speeds[speedIndex] + "x";
+            let persen = (speedIndex / (speeds.length - 1)) * 100;
+            speedIndicator.style.width = persen + "%";
+        }
+
+        function pasangFungsiDuaAksi(elemenTombol, aksiKlik, aksiTahan) {
+            let waktuMulai = 0, penandaWaktuTahan = null, gresTahanTerjadi = false;
+            function awalSentuh(e) {
+                waktuMulai = Date.now(); gresTahanTerjadi = false;
+                penandaWaktuTahan = setTimeout(() => { gresTahanTerjadi = true; aksiTahan(); }, 800);
+            }
+            function akhirSentuh(e) {
+                clearTimeout(penandaWaktuTahan);
+                if (!gresTahanTerjadi && (Date.now() - waktuMulai < 800)) { aksiKlik(); }
+            }
+            elemenTombol.addEventListener("mousedown", awalSentuh);
+            elemenTombol.addEventListener("mouseup", akhirSentuh);
+            elemenTombol.addEventListener("touchstart", awalSentuh, {passive: true});
+            elemenTombol.addEventListener("touchend", akhirSentuh, {passive: true});
+        }
+
+        pasangFungsiDuaAksi(document.getElementById("btnBack"), 
+            function aksiKlik() {
+                if (speedIndex > 0) { speedIndex--; if(audio) audio.playbackRate = speeds[speedIndex]; updateSpeedUI(); }
+            },
+            function aksiTahan() {
+                if (audio && isPlaying) { audio.currentTime = Math.max(0, audio.currentTime - 30); statusIndicator.innerText = "↩ REPLAY 30s"; }
+            }
+        );
+
+        pasangFungsiDuaAksi(document.getElementById("btnForward"), 
+            function aksiKlik() {
+                if (speedIndex < speeds.length - 1) { speedIndex++; if(audio) audio.playbackRate = speeds[speedIndex]; updateSpeedUI(); }
+            },
+            function aksiTahan() {
+                if (audio && isPlaying) { speedIndex = 2; audio.src = STREAM_URL + "?cb=" + Date.now(); audio.play(); updateSpeedUI(); statusIndicator.innerText = "⚡ CATCH-UP LIVE"; }
+            }
+        );
+
+        function startTimer() {
+            secondsElapsed = 0;
+            timerInterval = setInterval(() => {
+                secondsElapsed++;
+                let mins = Math.floor(secondsElapsed / 60);
+                let secs = secondsElapsed % 60;
+                streamTime.innerText = `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+            }, 1000);
+        }
+        function stopTimer() { clearInterval(timerInterval); streamTime.innerText = "0:00"; }
+
+        function prosesLogoutKeamanan() {
+            stopStreaming();
+            if (typeof Auth !== 'undefined') { Auth.logout(); } else {
+                localStorage.removeItem(CONFIG.SESSION_KEY); window.location.href = CONFIG.LOGIN_PAGE;
+            }
+        }
+    </script>
+</body>
+</html>
+
