@@ -1,27 +1,30 @@
-// =========================================================================
-// LOGIN.JS - Modul Autentikasi Clerk & Sliding Panel UI
-// Ngaos Al Falah Ploso
-// =========================================================================
-
 document.addEventListener("DOMContentLoaded", async function() {
-    // 1. ELEMEN SLIDING UI
+    // 1. ELEMEN UI & SLIDER
     const container = document.querySelector('.container');
     const registerBtn = document.querySelector('.register-btn');
     const loginBtn = document.querySelector('.login-btn');
 
     if (registerBtn && loginBtn && container) {
-        registerBtn.addEventListener('click', () => {
-            container.classList.add('active');
-            clearErrorMessages();
-        });
-
-        loginBtn.addEventListener('click', () => {
-            container.classList.remove('active');
-            clearErrorMessages();
-        });
+        registerBtn.addEventListener('click', () => container.classList.add('active'));
+        loginBtn.addEventListener('click', () => container.classList.remove('active'));
     }
 
-    // 2. ELEMEN FORM LOGIN & REGISTER
+    // 2. TOGGLE PASSWORD EYE ICON
+    document.querySelectorAll('.toggle-pwd').forEach(icon => {
+        icon.addEventListener('click', function() {
+            const targetId = this.getAttribute('data-target');
+            const targetInput = document.getElementById(targetId);
+            if (targetInput.type === 'password') {
+                targetInput.type = 'text';
+                this.classList.replace('bx-hide', 'bx-show');
+            } else {
+                targetInput.type = 'password';
+                this.classList.replace('bx-show', 'bx-hide');
+            }
+        });
+    });
+
+    // 3. ELEMEN FORM & MODAL OTP
     const loginForm = document.getElementById("loginForm");
     const registerForm = document.getElementById("registerForm");
     const usernameInput = document.getElementById("username");
@@ -29,316 +32,200 @@ document.addEventListener("DOMContentLoaded", async function() {
     const rememberCheckbox = document.getElementById("remember");
     const messageOutput = document.getElementById("message");
     const regMessageOutput = document.getElementById("regMessage");
-    const btnLogin = document.getElementById("btnLogin");
-    const btnRegister = document.getElementById("btnRegister");
-    const forgotPasswordBtn = document.getElementById("forgotPasswordBtn");
 
-    // 3. TOGGLE LIHAT / SEMBUNYIKAN PASSWORD
-    document.querySelectorAll('.toggle-password').forEach(icon => {
-        icon.addEventListener('click', function() {
-            const input = this.previousElementSibling;
-            if (input && input.type === 'password') {
-                input.type = 'text';
-                this.classList.replace('bxs-lock-alt', 'bx-show');
-            } else if (input) {
-                input.type = 'password';
-                this.classList.replace('bx-show', 'bxs-lock-alt');
-            }
-        });
-    });
+    const otpModal = document.getElementById("otpModal");
+    const otpCodeInput = document.getElementById("otpCode");
+    const otpMessageOutput = document.getElementById("otpMessage");
+    const btnVerifyOtp = document.getElementById("btnVerifyOtp");
+    const btnCancelOtp = document.getElementById("btnCancelOtp");
 
-    // 4. INISIALISASI CLERK SDK BEBAS RACE-CONDITION
-    const initClerk = async () => {
-        return new Promise((resolve) => {
-            if (window.Clerk && window.Clerk.isReady && window.Clerk.isReady()) {
-                resolve();
-                return;
-            }
-            const interval = setInterval(() => {
-                if (window.Clerk) {
-                    clearInterval(interval);
-                    window.Clerk.load({
-                        publishableKey: (typeof CONFIG !== 'undefined' && CONFIG.CLERK_PUBLISHABLE_KEY) 
-                            ? CONFIG.CLERK_PUBLISHABLE_KEY 
-                            : undefined
-                    }).then(() => resolve()).catch(() => resolve());
-                }
-            }, 100);
-        });
-    };
+    let currentSignUpAttempt = null;
 
-    try {
-        await initClerk();
-    } catch (err) {
-        console.error("Clerk init warn:", err);
+    // Load username jika pernah dicentang "Ingat Saya"
+    if (rememberCheckbox && localStorage.getItem(CONFIG.REMEMBER_KEY)) {
+        usernameInput.value = localStorage.getItem(CONFIG.REMEMBER_KEY);
+        rememberCheckbox.checked = true;
     }
 
-    // Auto-fill Remember Username
-    if (usernameInput && rememberCheckbox && typeof CONFIG !== 'undefined') {
-        const savedUsername = localStorage.getItem(CONFIG.REMEMBER_KEY);
-        if (savedUsername) {
-            usernameInput.value = savedUsername;
-            rememberCheckbox.checked = true;
+    // 4. INISIALISASI CLERK SDK
+    async function initClerk() {
+        if (!window.Clerk) {
+            tampilkanError(messageOutput, "Gagal memuat SDK Keamanan. Periksa koneksi internet Anda.");
+            return false;
+        }
+        if (!window.Clerk.isReady()) {
+            await window.Clerk.load({ publishableKey: CONFIG.CLERK_PUBLISHABLE_KEY });
+        }
+        return true;
+    }
+
+    // 5. PEMETA PESAN EROR RAMAH PENGGUNA
+    function mapFriendlyError(err) {
+        const code = err?.errors?.[0]?.code || err?.message || "";
+        
+        switch (code) {
+            case "form_identifier_not_found":
+                return "⛔ Email tidak terdaftar. Silakan periksa kembali email Anda atau klik 'Daftar Akun'.";
+            case "form_password_incorrect":
+                return "⛔ Kata sandi yang Anda masukkan salah. Silakan periksa kembali huruf besar/kecil kata sandi Anda.";
+            case "form_identifier_exists":
+                return "ℹ️ Email ini sudah terdaftar. Silakan pindah ke halaman 'Masuk' untuk login.";
+            case "form_password_length_too_short":
+                return "⚠️ Kata sandi terlalu pendek. Gunakan minimal 8 karakter demi keamanan akun Anda.";
+            case "form_code_incorrect":
+                return "❌ Kode OTP yang Anda masukkan salah. Silakan periksa kembali email Anda.";
+            case "too_many_requests":
+                return "⏳ Terlalu banyak percobaan. Demi keamanan, silakan tunggu 1-2 menit sebelum mencoba kembali.";
+            default:
+                if (typeof err === "string") return err;
+                return "⚠️ Terjadi kendala saat memproses permintaan. Pastikan koneksi internet Anda stabil.";
         }
     }
 
-    // Auto-redirect Jika Sesi Masih Aktif
-    if (typeof CONFIG !== 'undefined' && localStorage.getItem(CONFIG.SESSION_KEY)) {
-        try {
-            const session = JSON.parse(localStorage.getItem(CONFIG.SESSION_KEY));
-            if (Date.now() < session.expireTime) {
-                window.location.href = CONFIG.PLAYER_PAGE;
-                return;
-            }
-        } catch(e) {}
-    }
-
-    // 5. SISTEM PEMETA EROR RAMAH PENGGUNA (INDONESIA)
-    function mapClerkError(err) {
-        let code = "";
-        let message = "";
-
-        if (err && err.errors && err.errors.length > 0) {
-            code = err.errors[0].code || "";
-            message = err.errors[0].message || "";
-        } else if (err && err.message) {
-            message = err.message;
-        }
-
-        const codeLower = code.toLowerCase();
-        const msgLower = message.toLowerCase();
-
-        if (codeLower.includes("identifier_not_found") || msgLower.includes("couldn't find your account") || msgLower.includes("user not found")) {
-            return {
-                title: "Email Tidak Terdaftar",
-                text: "Alamat email ini belum terdaftar di aplikasi Ngaos.",
-                advice: "💡 Saran: Periksa kembali ejaan email Anda atau klik tombol 'Daftar Akun' untuk pendaftaran."
-            };
-        }
-
-        if (codeLower.includes("form_password_incorrect") || msgLower.includes("password incorrect") || msgLower.includes("invalid password")) {
-            return {
-                title: "Kata Sandi Salah",
-                text: "Kata sandi yang Anda masukkan tidak sesuai.",
-                advice: "💡 Saran: Periksa tombol Caps Lock dan penulisan huruf besar/kecil kata sandi Anda."
-            };
-        }
-
-        if (codeLower.includes("form_identifier_exists") || msgLower.includes("already exists") || msgLower.includes("email address is taken")) {
-            return {
-                title: "Email Sudah Terdaftar",
-                text: "Alamat email ini sudah terdaftar di sistem.",
-                advice: "💡 Saran: Silakan tekan tombol 'Masuk' untuk login menggunakan email tersebut."
-            };
-        }
-
-        if (codeLower.includes("password_length") || msgLower.includes("minimum 8 characters") || msgLower.includes("password too short")) {
-            return {
-                title: "Kata Sandi Terlalu Pendek",
-                text: "Kata sandi minimal terdiri dari 8 karakter.",
-                advice: "💡 Saran: Buat kata sandi minimal 8 karakter agar akun Anda tetap aman."
-            };
-        }
-
-        if (codeLower.includes("form_invalid_email") || msgLower.includes("email address must be valid")) {
-            return {
-                title: "Format Email Tidak Valid",
-                text: "Penulisan alamat email tidak sesuai format.",
-                advice: "💡 Saran: Pastikan format email benar (contoh: nama@gmail.com)."
-            };
-        }
-
-        if (codeLower.includes("too_many_requests") || msgLower.includes("too many requests") || msgLower.includes("rate limit")) {
-            return {
-                title: "Terlalu Banyak Percobaan",
-                text: "Akses dibatasi sementara demi keamanan.",
-                advice: "💡 Saran: Silakan tunggu 1 - 2 menit sebelum mencoba masuk kembali."
-            };
-        }
-
-        if (!navigator.onLine || msgLower.includes("network") || msgLower.includes("failed to fetch")) {
-            return {
-                title: "Koneksi Terputus",
-                text: "Gagal terhubung ke server autentikasi.",
-                advice: "💡 Saran: Periksa koneksi internet Wi-Fi / Seluler Anda lalu coba lagi."
-            };
-        }
-
-        return {
-            title: "Gagal Memproses",
-            text: message || "Terjadi kendala saat menghubungkan akun.",
-            advice: "💡 Saran: Silakan periksa data Anda atau muat ulang (refresh) halaman."
-        };
-    }
-
-    function tampilkanErrorFormatted(containerEl, errObj) {
-        if (!containerEl) return;
-        containerEl.innerHTML = `
-            <div class="friendly-error-card">
-                <div class="error-title"><i class='bx bx-error-circle'></i> ${errObj.title}</div>
-                <div class="error-text">${errObj.text}</div>
-                <div class="error-advice">${errObj.advice}</div>
-            </div>
-        `;
-    }
-
-    function clearErrorMessages() {
-        if (messageOutput) messageOutput.innerHTML = "";
-        if (regMessageOutput) regMessageOutput.innerHTML = "";
-    }
-
-    function setButtonLoading(btn, isLoading) {
-        if (!btn) return;
-        const textSpan = btn.querySelector('.btn-text');
-        const spinnerSpan = btn.querySelector('.btn-spinner');
-        if (isLoading) {
-            btn.disabled = true;
-            if (textSpan) textSpan.style.display = 'none';
-            if (spinnerSpan) spinnerSpan.style.display = 'inline-flex';
-        } else {
-            btn.disabled = false;
-            if (textSpan) textSpan.style.display = 'inline';
-            if (spinnerSpan) spinnerSpan.style.display = 'none';
-        }
-    }
-
-    // 6. PROSES SUBMIT LOGIN
+    // 6. LOGIKA LOGIN (STRICT SINGLE-DEVICE & ADMIN APPROVAL)
     if (loginForm) {
-        loginForm.addEventListener("submit", async function(event) {
-            event.preventDefault();
-            clearErrorMessages();
-
-            const username = usernameInput ? usernameInput.value.trim() : "";
-            const password = passwordInput ? passwordInput.value : "";
-
-            if (!username || !password) {
-                tampilkanErrorFormatted(messageOutput, {
-                    title: "Data Belum Lengkap",
-                    text: "Alamat email dan kata sandi wajib diisi.",
-                    advice: "💡 Saran: Silakan lengkapi seluruh kolom di atas."
-                });
-                return;
-            }
-
-            setButtonLoading(btnLogin, true);
-
-            try {
-                if (window.Clerk && window.Clerk.client) {
-                    const signInResponse = await window.Clerk.client.signIn.create({
-                        identifier: username,
-                        password: password
-                    });
-
-                    if (signInResponse.status === "complete") {
-                        await window.Clerk.setActive({ session: signInResponse.createdSessionId });
-                        cekPendengarDanRedirect(username);
-                        return;
-                    }
-                }
-                // Fallback login lokal jika Clerk offline / tidak dikonfigurasi
-                cekPendengarDanRedirect(username);
-            } catch (err) {
-                setButtonLoading(btnLogin, false);
-                const friendlyErr = mapClerkError(err);
-                tampilkanErrorFormatted(messageOutput, friendlyErr);
-            }
-        });
-    }
-
-    // 7. PROSES SUBMIT REGISTER
-    if (registerForm) {
-        registerForm.addEventListener("submit", async function(event) {
-            event.preventDefault();
-            clearErrorMessages();
-
-            const regEmail = document.getElementById("regEmail") ? document.getElementById("regEmail").value.trim() : "";
-            const regName = document.getElementById("regName") ? document.getElementById("regName").value.trim() : "";
-            const regPassword = document.getElementById("regPassword") ? document.getElementById("regPassword").value : "";
-
-            if (!regEmail || !regName || !regPassword) {
-                tampilkanErrorFormatted(regMessageOutput, {
-                    title: "Data Pendaftaran Belum Lengkap",
-                    text: "Seluruh kolom formulir pendaftaran wajib diisi.",
-                    advice: "💡 Saran: Pastikan Email, Nama, dan Kata Sandi telah terisi."
-                });
-                return;
-            }
-
-            if (regPassword.length < 8) {
-                tampilkanErrorFormatted(regMessageOutput, {
-                    title: "Kata Sandi Kurang Panjang",
-                    text: "Kata sandi minimal 8 karakter.",
-                    advice: "💡 Saran: Gunakan kombinasi huruf dan angka minimal 8 Karakter."
-                });
-                return;
-            }
-
-            setButtonLoading(btnRegister, true);
-
-            try {
-                if (window.Clerk && window.Clerk.client) {
-                    const signUpResponse = await window.Clerk.client.signUp.create({
-                        emailAddress: regEmail,
-                        firstName: regName,
-                        password: regPassword
-                    });
-
-                    if (signUpResponse.status === "complete") {
-                        await window.Clerk.setActive({ session: signUpResponse.createdSessionId });
-                        simpanSesiDanRedirect(regName || regEmail);
-                        return;
-                    }
-                }
-                // Fallback register lokal
-                simpanSesiDanRedirect(regName || regEmail);
-            } catch (err) {
-                setButtonLoading(btnRegister, false);
-                const friendlyErr = mapClerkError(err);
-                tampilkanErrorFormatted(regMessageOutput, friendlyErr);
-            }
-        });
-    }
-
-    // 8. LUPA PASSWORD LINK HANDLER
-    if (forgotPasswordBtn) {
-        forgotPasswordBtn.addEventListener("click", function(e) {
+        loginForm.addEventListener("submit", async function(e) {
             e.preventDefault();
-            tampilkanErrorFormatted(messageOutput, {
-                title: "Lupa Kata Sandi",
-                text: "Untuk mereset kata sandi Anda, silakan hubungi pengurus radio.",
-                advice: "💡 Saran: Kirim pesan ke admin majlis atau lakukan pendaftaran ulang."
-            });
+            setLoading("btnLogin", true);
+            sembunyikanPesan(messageOutput);
+
+            const isClerkReady = await initClerk();
+            if (!isClerkReady) { setLoading("btnLogin", false); return; }
+
+            const email = usernameInput.value.trim();
+            const password = passwordInput.value;
+
+            try {
+                // A. Proses SignIn ke Clerk
+                const signInAttempt = await window.Clerk.client.signIn.create({
+                    identifier: email,
+                    password: password
+                });
+
+                if (signInAttempt.status === "complete") {
+                    await window.Clerk.setActive({ session: signInAttempt.createdSessionId });
+                    
+                    // B. PREVENT MULTI-DEVICE (STRICT SINGLE DEVICE BLOCK)
+                    const user = window.Clerk.user;
+                    const sessions = await user.getSessions();
+                    const activeSessions = sessions.filter(s => s.status === "active");
+
+                    if (activeSessions.length > 1) {
+                        // Tolak & Keluar dari sesi baru
+                        await window.Clerk.signOut();
+                        tampilkanError(messageOutput, 
+                            "⛔ GAGAL MASUK: AKUN SEDANG DIGUNAKAN\n\n" +
+                            "Akun Anda saat ini sedang aktif di perangkat lain. Satu akun hanya dapat digunakan pada 1 perangkat dalam satu waktu.\n\n" +
+                            "💡 Anjuran:\n" +
+                            "• Silakan logout dari aplikasi di perangkat Anda sebelumnya.\n" +
+                            "• Jika Anda merasa tidak login di perangkat lain, atur ulang kata sandi Anda."
+                        );
+                        setLoading("btnLogin", false);
+                        return;
+                    }
+
+                    // C. CEK PERSETUJUAN ADMIN (ADMIN APPROVAL)
+                    const isApproved = user.publicMetadata?.approved;
+                    if (isApproved === false) {
+                        await window.Clerk.signOut();
+                        tampilkanError(messageOutput, 
+                            "⏳ AKUN MENUNGGU PERSETUJUAN ADMIN\n\n" +
+                            "Pendaftaran Anda telah berhasil, namun akun Anda masih dalam proses verifikasi oleh Admin.\n\n" +
+                            "💡 Anjuran: Silakan hubungi Admin Al Falah Ploso untuk pengaktifan akun."
+                        );
+                        setLoading("btnLogin", false);
+                        return;
+                    }
+
+                    // Success -> Simpan Sesi & Redirect ke Player
+                    simpanSesiDanRedirect(user.fullName || user.primaryEmailAddress.emailAddress);
+                } else {
+                    tampilkanError(messageOutput, "Proses masuk memerlukan langkah verifikasi tambahan.");
+                }
+            } catch (err) {
+                tampilkanError(messageOutput, mapFriendlyError(err));
+            } finally {
+                setLoading("btnLogin", false);
+            }
         });
     }
 
-    // 9. CEK LISTENERS ICECAST & REDIRECT
-    function cekPendengarDanRedirect(username) {
-        if (typeof CONFIG === 'undefined' || !CONFIG.STREAM_URL) {
-            simpanSesiDanRedirect(username);
-            return;
-        }
+    // 7. LOGIKA REGISTER (HEADLESS + EMAIL OTP)
+    if (registerForm) {
+        registerForm.addEventListener("submit", async function(e) {
+            e.preventDefault();
+            setLoading("btnRegister", true);
+            sembunyikanPesan(regMessageOutput);
 
-        const statusUrl = CONFIG.STREAM_URL.replace("/radio", "/status-json.xsl");
+            const isClerkReady = await initClerk();
+            if (!isClerkReady) { setLoading("btnRegister", false); return; }
 
-        fetch(statusUrl + "?cb=" + Date.now())
-            .then(res => res.json())
-            .then(data => {
-                let jumlahPendengarAktif = 0;
-                if (data && data.icestats && data.icestats.source) {
-                    const sources = Array.isArray(data.icestats.source) ? data.icestats.source : [data.icestats.source];
-                    sources.forEach(src => {
-                        if (src.listeners !== undefined) {
-                            jumlahPendengarAktif = parseInt(src.listeners, 10);
-                        }
-                    });
-                }
-                simpanSesiDanRedirect(username);
-            })
-            .catch(err => {
-                simpanSesiDanRedirect(username);
-            });
+            const fullName = document.getElementById("regFullName").value.trim();
+            const email = document.getElementById("regEmail").value.trim();
+            const password = document.getElementById("regPassword").value;
+
+            try {
+                // Buat Pendaftaran Baru via Headless API
+                currentSignUpAttempt = await window.Clerk.client.signUp.create({
+                    firstName: fullName,
+                    emailAddress: email,
+                    password: password
+                });
+
+                // Kirim Kode OTP ke Email
+                await currentSignUpAttempt.prepareEmailAddressVerification({ strategy: "email_code" });
+
+                // Tampilkan Modal OTP
+                otpModal.classList.remove("hidden");
+                tampilkanSukses(otpMessageOutput, "Kode OTP telah dikirim ke " + email);
+
+            } catch (err) {
+                tampilkanError(regMessageOutput, mapFriendlyError(err));
+            } finally {
+                setLoading("btnRegister", false);
+            }
+        });
     }
 
+    // 8. VERIFIKASI KODE OTP
+    if (btnVerifyOtp) {
+        btnVerifyOtp.addEventListener("click", async function() {
+            const code = otpCodeInput.value.trim();
+            if (code.length < 6) {
+                tampilkanError(otpMessageOutput, "Silakan masukkan 6 angka kode OTP.");
+                return;
+            }
+
+            try {
+                const verification = await currentSignUpAttempt.attemptEmailAddressVerification({ code });
+
+                if (verification.status === "complete") {
+                    otpModal.classList.add("hidden");
+                    
+                    // Keluar dari sesi otomatis agar user WAJIB LOGIN KEMBALI
+                    await window.Clerk.signOut();
+
+                    // Switch Slider ke Form Login
+                    container.classList.remove("active");
+
+                    tampilkanSukses(messageOutput, 
+                        "✅ PENDAFTARAN BERHASIL!\n\n" +
+                        "Akun Anda telah terverifikasi. Silakan masuk menggunakan email dan kata sandi yang baru Anda daftarkan."
+                    );
+                } else {
+                    tampilkanError(otpMessageOutput, "Kode verifikasi belum sesuai. Periksa kembali email Anda.");
+                }
+            } catch (err) {
+                tampilkanError(otpMessageOutput, mapFriendlyError(err));
+            }
+        });
+    }
+
+    if (btnCancelOtp) {
+        btnCancelOtp.addEventListener("click", () => otpModal.classList.add("hidden"));
+    }
+
+    // HELPER FUNCTIONS
     function simpanSesiDanRedirect(username) {
         if (typeof Auth !== 'undefined') Auth.createSession(username);
         if (rememberCheckbox && rememberCheckbox.checked) {
@@ -347,6 +234,40 @@ document.addEventListener("DOMContentLoaded", async function() {
             localStorage.removeItem(CONFIG.REMEMBER_KEY);
         }
         window.location.href = CONFIG.PLAYER_PAGE;
+    }
+
+    function tampilkanError(element, teks) {
+        if (!element) return;
+        element.innerText = teks;
+        element.className = "alert-box error";
+    }
+
+    function tampilkanSukses(element, teks) {
+        if (!element) return;
+        element.innerText = teks;
+        element.className = "alert-box success";
+    }
+
+    function sembunyikanPesan(element) {
+        if (!element) return;
+        element.className = "alert-box";
+        element.innerText = "";
+    }
+
+    function setLoading(btnId, isLoading) {
+        const btn = document.getElementById(btnId);
+        if (!btn) return;
+        const text = btn.querySelector('.btn-text');
+        const loader = btn.querySelector('.btn-loader');
+        if (isLoading) {
+            btn.disabled = true;
+            if (text) text.classList.add('hidden');
+            if (loader) loader.classList.remove('hidden');
+        } else {
+            btn.disabled = false;
+            if (text) text.classList.remove('hidden');
+            if (loader) loader.classList.add('hidden');
+        }
     }
 });
 
