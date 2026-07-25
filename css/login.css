@@ -1,0 +1,436 @@
+/* =========================================
+   LOGIN.CSS - Final Fixed Version
+   Ngaos Al Falah Ploso
+   ========================================= */
+
+* { 
+    margin: 0; 
+    padding: 0; 
+    box-sizing: border-box; 
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+}
+
+body { 
+    background: #1e222b; 
+    display: flex; 
+    justify-content: center; 
+    align-items: center; 
+    min-height: 100vh; 
+    min-height: 100dvh;
+    padding: 20px; 
+    overflow: hidden; 
+    position: relative; 
+}
+
+.background { 
+    position: absolute; 
+    width: 100%; 
+    height: 100%; 
+    background: radial-gradient(circle, #2a2f3d 0%, #1e222b 100%); 
+    z-index: 1; 
+}
+
+/* Pembungkus Utama Sliding Panel Neumorphic */
+.container {
+    position: relative;
+    width: 850px;
+    height: 560px;
+    background: #232732;
+    border-radius: 40px;
+    box-shadow: 12px 12px 24px #14161c, -12px -12px 24px #323848;
+    overflow: hidden;
+    z-index: 2;
+}
+
+/* Form Box (Panel Kiri & Kanan) */
+.form-box {
+    position: absolute;
+    right: 0;
+    width: 50%;
+    height: 100%;
+    background: #232732;
+    display: flex;
+    align-items: center;
+    color: #fff;
+    text-align: center;
+    padding: 30px 40px;
+    z-index: 1;
+    transition: .6s ease-in-out 1.2s, visibility 0s 1s;
+}
+
+.container.active .form-box {
+    right: 50%;
+}
+
+.form-box.register {
+    visibility: hidden;
+}
+
+.container.active .form-box.register {
+    visibility: visible;
+}
+
+.logo-container {
+    width: 80px;
+    height: 80px;
+    margin: 0 auto 10px auto;
+    border-radius: 50%;
+    background: #232732;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: inset 6px 6px 12px #14161c, inset -6px -6px 12px #323848;
+}
+
+.app-logo {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+}
+
+h1 {
+    font-size: 20px;
+    margin-bottom: 2px;
+    color: #fff;
+    font-weight: 700;
+}
+
+.subtitle {
+    font-size: 11px;
+    color: #8a92a6;
+    margin-bottom: 15px;
+    letter-spacing: 0.5px;
+}
+
+form {
+    width: 100%;
+}
+
+/* Input Box Styling */
+.input-box {
+    position: relative;
+    margin: 12px 0;
+}
+
+.input-box input {
+    width: 100%;
+    padding: 13px 45px 13px 20px;
+    background: #232732;
+    border: none;
+    outline: none;
+    border-radius: 20px;
+    color: #fff;
+    font-size: 13px;
+    box-shadow: inset 5px 5px 10px #14161c, inset -5px -5px 10px #323848;
+}
+
+/* Ikon standar (Email, Username, dll) di posisi kanan 20px */
+.input-box i {
+    position: absolute;
+    right: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 18px;
+    color: #8a92a6;
+}
+
+/* =========================================================
+   PERBAIKAN POSISI IKON GEMBOK & MATA (SHOW/HIDE PASSWORD)
+   ========================================================= */
+
+/* 1. Ikon Mata Toggle Password di Paling Kanan (18px) */
+.input-box i.toggle-pwd,
+.input-box i.toggle-password,
+.input-box i.bx-hide,
+.input-box i.bx-show,
+.input-box i.fa-eye,
+.input-box i.fa-eye-slash {
+    right: 18px !important;
+    cursor: pointer;
+    transition: color 0.3s ease;
+    z-index: 10;
+}
+
+.input-box i.toggle-pwd:hover,
+.input-box i.toggle-password:hover,
+.input-box i.bx-hide:hover,
+.input-box i.bx-show:hover {
+    color: #ffffff;
+}
+
+/* 2. Ikon Gembok Digeser ke Sebelah Kiri Ikon Mata (48px) */
+.input-box i.bxs-lock-alt,
+.input-box i.bxs-lock,
+.input-box i.fa-lock {
+    right: 48px !important;
+    z-index: 5;
+}
+
+/* 3. Ruang Ketik Password Perluas (75px) agar Teks Tidak Tertimpa Kedua Ikon */
+/* Berlaku baik saat password tersembunyi maupun saat ditampilkan sebagai teks */
+.input-box input[type="password"],
+.input-box:has(i.toggle-pwd) input,
+.input-box:has(i.bx-hide) input,
+.input-box:has(i.bx-show) input,
+.input-box:has(i.toggle-password) input {
+    padding-right: 75px !important;
+}
+
+/* Checkbox Ingat Saya */
+.forgot-link {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    margin: 10px 5px 15px;
+    font-size: 12px;
+    color: #8a92a6;
+}
+
+.forgot-link label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+}
+
+.forgot-link input[type="checkbox"] {
+    accent-color: #ff5722;
+    cursor: pointer;
+}
+
+/* Tombol Neumorphic */
+.btn {
+    width: 100%;
+    padding: 13px;
+    background: #232732;
+    border: none;
+    outline: none;
+    border-radius: 20px;
+    color: #ff5722;
+    font-size: 13px;
+    font-weight: bold;
+    letter-spacing: 1px;
+    cursor: pointer;
+    box-shadow: 6px 6px 12px #14161c, -6px -6px 12px #323848;
+    transition: .3s ease;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn:active {
+    box-shadow: inset 4px 4px 8px #14161c, inset -4px -4px 8px #323848;
+    transform: scale(0.98);
+}
+
+.btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* Alert Notification Box (Pesan Eror Ramah Pengguna) */
+.alert-box {
+    display: none;
+    font-size: 12.5px;
+    padding: 11px 14px;
+    border-radius: 14px;
+    margin: 12px 0;
+    text-align: left;
+    line-height: 1.4;
+    white-space: pre-line;
+}
+
+.alert-box.error {
+    display: block;
+    background: rgba(239, 68, 68, 0.15);
+    border: 1px solid rgba(239, 68, 68, 0.4);
+    color: #fca5a5;
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+.alert-box.success {
+    display: block;
+    background: rgba(34, 197, 94, 0.15);
+    border: 1px solid rgba(34, 197, 94, 0.4);
+    color: #86efac;
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Sliding Toggle Panel Slider */
+.toggle-box {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+}
+
+.toggle-box::before {
+    content: '';
+    position: absolute;
+    left: -250%;
+    width: 300%;
+    height: 100%;
+    background: #ff5722;
+    border-radius: 150px;
+    z-index: 2;
+    transition: 1.8s ease-in-out;
+}
+
+.container.active .toggle-box::before {
+    left: 50%;
+}
+
+.toggle-panel {
+    position: absolute;
+    width: 50%;
+    height: 100%;
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 2;
+    transition: .6s ease-in-out;
+}
+
+.toggle-panel.toggle-left {
+    left: 0;
+    transition-delay: 1.2s;
+}
+
+.container.active .toggle-panel.toggle-left {
+    left: -50%;
+    transition-delay: 0s;
+}
+
+.toggle-panel.toggle-right {
+    right: -50%;
+    transition-delay: 0s;
+}
+
+.container.active .toggle-panel.toggle-right {
+    right: 0;
+    transition-delay: 1.2s;
+}
+
+.toggle-panel h1 { font-size: 22px; color: #fff; }
+.toggle-panel p { margin: 10px 0 20px; font-size: 12.5px; color: #f5f5f5; }
+
+.toggle-panel .btn {
+    width: 140px;
+    padding: 10px;
+    background: transparent;
+    border: 2px solid #ffffff;
+    color: #ffffff;
+    box-shadow: none;
+}
+
+.toggle-panel .btn:hover {
+    background: #ffffff;
+    color: #1e222b;
+}
+
+/* Modal Overlay Verifikasi OTP */
+.modal-overlay {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(15, 18, 24, 0.85);
+    backdrop-filter: blur(8px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 999;
+    padding: 20px;
+}
+
+.modal-overlay.hidden { display: none !important; }
+
+.modal-card {
+    background: #232732;
+    border-radius: 28px;
+    padding: 30px 24px;
+    max-width: 380px;
+    width: 100%;
+    text-align: center;
+    box-shadow: 10px 10px 30px #14161c, -10px -10px 30px #323848;
+    color: #fff;
+    animation: scaleUp 0.3s ease;
+}
+
+@keyframes scaleUp {
+    from { opacity: 0; transform: scale(0.9); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+.modal-icon { font-size: 48px; color: #ff5722; margin-bottom: 12px; }
+.modal-card h2 { font-size: 20px; margin-bottom: 8px; }
+.modal-card p { font-size: 13px; color: #8a92a6; margin-bottom: 20px; line-height: 1.4; }
+
+.otp-input-container input {
+    width: 100%;
+    padding: 12px;
+    font-size: 24px;
+    letter-spacing: 8px;
+    text-align: center;
+    background: #1e222b;
+    border: 1px solid #323848;
+    border-radius: 14px;
+    color: #fff;
+    outline: none;
+    margin-bottom: 12px;
+    box-shadow: inset 3px 3px 6px #14161c, inset -3px -3px 6px #323848;
+}
+
+.otp-input-container input:focus { border-color: #ff5722; }
+
+.modal-actions { display: flex; gap: 10px; margin-top: 15px; }
+.btn-secondary { background: transparent !important; border: 1px solid #323848; color: #8a92a6 !important; box-shadow: none !important; }
+.btn-secondary:hover { background: #323848 !important; color: #fff !important; }
+.hidden { display: none !important; }
+
+/* Responsivitas Layar HP / Mobile Android */
+@media screen and (max-width: 650px) {
+    .container { 
+        height: 600px; 
+        width: 100%;
+        margin: 10px;
+    }
+
+    .form-box {
+        bottom: 0;
+        width: 100%;
+        height: 72%;
+        padding: 20px;
+    }
+
+    .container.active .form-box {
+        right: 0;
+        bottom: 28%;
+    }
+
+    .toggle-box::before {
+        left: 0;
+        top: -270%;
+        width: 100%;
+        height: 300%;
+        border-radius: 20vw;
+    }
+
+    .container.active .toggle-box::before {
+        left: 0;
+        top: 70%;
+    }
+
+    .toggle-panel { width: 100%; height: 28%; }
+    .toggle-panel.toggle-left { top: 0; }
+    .container.active .toggle-panel.toggle-left { top: -28%; }
+    .toggle-panel.toggle-right { bottom: -28%; }
+    .container.active .toggle-panel.toggle-right { bottom: 0; }
+}
+
