@@ -1,9 +1,9 @@
 // =========================================
 // SW.JS - Service Worker
-// Version 4.1.0 - Ngaos Al Falah Ploso
+// Version 4.1.1 - Ngaos Al Falah Ploso (Fixed Non-GET Cache Bug)
 // =========================================
 
-const CACHE_NAME = 'ngaos-alfalah-v4.1.0';
+const CACHE_NAME = 'ngaos-alfalah-v4.1.1';
 
 // Daftar file yang wajib di-cache untuk mode offline PWA
 const ASSETS_TO_CACHE = [
@@ -12,7 +12,6 @@ const ASSETS_TO_CACHE = [
     './player.html',
     './css/login.css',
     './js/config.js',
-    './js/crypto.js',
     './js/auth.js',
     './js/login.js',
     './manifest.json',
@@ -45,7 +44,13 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
     const requestUrl = new URL(event.request.url);
 
-    // Jangan cache request ke Clerk API atau Stream Audio Icecast
+    // 1. FILTER METODE HTTP: caches.put() HANYA mendukung metode GET
+    if (event.request.method !== 'GET') {
+        event.respondWith(fetch(event.request));
+        return;
+    }
+
+    // 2. Jangan cache request ke Clerk API atau Stream Audio Icecast
     if (
         requestUrl.hostname.includes('clerk') || 
         requestUrl.hostname.includes('alhastream.com') ||
@@ -55,6 +60,7 @@ self.addEventListener('fetch', (event) => {
         return;
     }
 
+    // 3. Eksekusi Caching Strategy
     event.respondWith(
         fetch(event.request)
             .then((response) => {
