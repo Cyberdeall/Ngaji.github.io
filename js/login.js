@@ -1,7 +1,7 @@
 /**
  * =========================================
  * LOGIN.JS
- * Version 4.3.0 - Hybrid Verification (OTP & Magic Link Support)
+ * Version 4.4.0 - Hybrid Verification (OTP, Magic Link & Device Trust)
  * =========================================
  */
 
@@ -89,7 +89,7 @@ document.addEventListener("DOMContentLoaded", async function() {
                     );
                 }
 
-                // Cek jika pengguna masuk via Magic Link (Link Verifikasi Email)
+                // Cek jika pengguna berhasil verifikasi via Magic Link
                 if (window.Clerk.user) {
                     const user = window.Clerk.user;
                     saveSesiAndRedirect(user.fullName || user.primaryEmailAddress.emailAddress);
@@ -123,7 +123,7 @@ document.addEventListener("DOMContentLoaded", async function() {
                 (typeof err === "string" ? err : "⚠️ Terjadi kendala saat memproses permintaan. Pastikan koneksi internet Anda stabil.");
         }
 
-        // ========== 6. LOGIKA LOGIN (FLEKSIBEL OTP / MAGIC LINK) ==========
+        // ========== 6. LOGIKA LOGIN (STRICT SINGLE-DEVICE & FLEKSIBEL VERIFIKASI) ==========
         if (loginForm) {
             loginForm.addEventListener("submit", async function(e) {
                 e.preventDefault();
@@ -168,6 +168,7 @@ document.addEventListener("DOMContentLoaded", async function() {
                     if (signInAttempt.status === "complete") {
                         await window.Clerk.setActive({ session: signInAttempt.createdSessionId });
                         
+                        // Prevent Multi-Device
                         const user = window.Clerk.user;
                         const sessions = await user.getSessions();
                         const activeSessions = sessions.filter(s => s.status === "active");
@@ -176,19 +177,20 @@ document.addEventListener("DOMContentLoaded", async function() {
                             await window.Clerk.signOut();
                             showError(messageOutput, 
                                 "⛔ GAGAL MASUK: AKUN SEDANG DIGUNAKAN\n\n" +
-                                "Akun Anda saat ini sedang aktif di perangkat lain."
+                                "Akun Anda saat ini sedang aktif di perangkat lain. Satu akun hanya dapat digunakan pada 1 perangkat dalam satu waktu."
                             );
                             setLoading("btnLogin", false);
                             RateLimiter.reset('login');
                             return;
                         }
 
+                        // Cek Persetujuan Admin
                         const isApproved = user.publicMetadata?.approved;
                         if (isApproved === false) {
                             await window.Clerk.signOut();
                             showError(messageOutput, 
                                 "⏳ AKUN MENUNGGU PERSETUJUAN ADMIN\n\n" +
-                                "Akun Anda masih dalam proses verifikasi oleh Admin."
+                                "Pendaftaran Anda telah berhasil, namun akun Anda masih dalam proses verifikasi oleh Admin."
                             );
                             setLoading("btnLogin", false);
                             return;
@@ -198,8 +200,12 @@ document.addEventListener("DOMContentLoaded", async function() {
                         RateLimiter.reset('login');
 
                     } 
-                    // C. KONDISI 2: MEMBUTUHKAN VERIFIKASI (OTP ATAU MAGIC LINK)
-                    else if (signInAttempt.status === "needs_first_factor" || signInAttempt.status === "needs_second_factor") {
+                    // C. KONDISI 2: MEMBUTUHKAN VERIFIKASI (OTP, MAGIC LINK, ATAU DEVICE TRUST)
+                    else if (
+                        signInAttempt.status === "needs_first_factor" || 
+                        signInAttempt.status === "needs_second_factor" || 
+                        signInAttempt.status === "needs_client_trust"
+                    ) {
                         currentSignInAttempt = signInAttempt;
                         authMode = 'login';
 
@@ -207,20 +213,22 @@ document.addEventListener("DOMContentLoaded", async function() {
                         const otpFactor = factors.find(f => f.strategy === "email_code");
                         const linkFactor = factors.find(f => f.strategy === "email_link");
 
-                        // Jika Dashboard Menggunakan Kode OTP
+                        // Jika Menggunakan Kode OTP
                         if (otpFactor) {
-                            if (signInAttempt.status === "needs_first_factor") {
-                                await signInAttempt.prepareFirstFactor({ strategy: "email_code", emailAddressId: otpFactor.emailAddressId });
-                            } else {
+                            if (signInAttempt.status === "needs_second_factor") {
                                 await signInAttempt.prepareSecondFactor({ strategy: "email_code" });
+                            } else {
+                                await signInAttempt.prepareFirstFactor({ strategy: "email_code", emailAddressId: otpFactor.emailAddressId });
                             }
 
                             DOMUtils.removeClass(otpModal, "hidden");
                             showSuccess(otpMessageOutput, "🔑 Kode verifikasi (OTP) telah dikirim ke email Anda.");
                         } 
-                        // Jika Dashboard Menggunakan Magic Link
+                        // Jika Menggunakan Magic Link
                         else if (linkFactor) {
-                            if (signInAttempt.status === "needs_first_factor") {
+                            if (signInAttempt.status === "needs_second_factor") {
+                                await signInAttempt.prepareSecondFactor({ strategy: "email_link" });
+                            } else {
                                 await signInAttempt.prepareFirstFactor({
                                     strategy: "email_link",
                                     emailAddressId: linkFactor.emailAddressId,
@@ -230,7 +238,7 @@ document.addEventListener("DOMContentLoaded", async function() {
 
                             showSuccess(messageOutput, "📧 Link verifikasi telah dikirim ke email Anda. Silakan buka email Anda dan klik link tersebut untuk masuk.");
                         } else {
-                            showError(messageOutput, "⚠️ Metode verifikasi tidak didukung.");
+                            showError(messageOutput, "⚠️ Metode verifikasi tidak didukung oleh browser Anda.");
                         }
                     } else {
                         showError(messageOutput, "⚠️ Status autentikasi tidak dikenal: " + signInAttempt.status);
@@ -244,7 +252,7 @@ document.addEventListener("DOMContentLoaded", async function() {
             });
         }
 
-        // ========== 7. LOGIKA REGISTER (FLEKSIBEL OTP / MAGIC LINK) ==========
+        // ========== 7. LOGIKA REGISTER (HEADLESS + FLEKSIBEL VERIFIKASI) ==========
         if (registerForm) {
             registerForm.addEventListener("submit", async function(e) {
                 e.preventDefault();
@@ -289,13 +297,13 @@ document.addEventListener("DOMContentLoaded", async function() {
 
                     authMode = 'signup';
 
-                    // Coba Mengirimkan Kode OTP Dulu
+                    // Coba Kirim Kode OTP Dulu
                     try {
                         await currentSignUpAttempt.prepareEmailAddressVerification({ strategy: "email_code" });
                         DOMUtils.removeClass(otpModal, "hidden");
                         showSuccess(otpMessageOutput, "✅ Kode OTP telah dikirim ke " + email);
                     } 
-                    // Fallback Otomatis ke Magic Link jika OTP Tidak Aktif di Dashboard
+                    // Fallback Otomatis ke Magic Link jika OTP Nonaktif di Dashboard
                     catch (otpErr) {
                         await currentSignUpAttempt.prepareEmailAddressVerification({
                             strategy: "email_link",
@@ -313,7 +321,7 @@ document.addEventListener("DOMContentLoaded", async function() {
             });
         }
 
-        // ========== 8. VERIFIKASI KODE OTP (HANYA AKTIF SAAT MODE OTP) ==========
+        // ========== 8. VERIFIKASI KODE OTP ==========
         if (btnVerifyOtp) {
             btnVerifyOtp.addEventListener("click", async function() {
                 try {
@@ -347,10 +355,11 @@ document.addEventListener("DOMContentLoaded", async function() {
                     // B. Verifikasi OTP Login
                     else if (authMode === 'login' && currentSignInAttempt) {
                         let result;
-                        if (currentSignInAttempt.status === 'needs_first_factor') {
-                            result = await currentSignInAttempt.attemptFirstFactor({ strategy: 'email_code', code });
-                        } else {
+                        if (currentSignInAttempt.status === 'needs_second_factor') {
                             result = await currentSignInAttempt.attemptSecondFactor({ strategy: 'email_code', code });
+                        } else {
+                            // Berlaku untuk 'needs_first_factor' dan 'needs_client_trust'
+                            result = await currentSignInAttempt.attemptFirstFactor({ strategy: 'email_code', code });
                         }
 
                         if (result.status === "complete") {
