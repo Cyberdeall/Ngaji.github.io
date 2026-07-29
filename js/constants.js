@@ -64,7 +64,7 @@ const CONSTANTS = Object.freeze({
 
     // ========== CLERK AUTH ==========
     CLERK: {
-        PUBLISHABLE_KEY: "pk_test_ZGFzaGluZy1idWctNjMuY2xlcmsuYWNjb3VudHMuZGV2JA==",
+        PUBLISHABLE_KEY: "pk_live_Y2xlcmsubmdhb3NhbGZhbGFoLmNvbSQ==",
         TIMEOUT_MS: 10000,              // timeout untuk Clerk API
     },
 });
