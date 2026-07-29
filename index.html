@@ -13,15 +13,32 @@
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
-    
-    <script
-      async
-      crossorigin="anonymous"
-      id="clerk-sdk"
-      src="https://cdn.jsdelivr.net/npm/@clerk/clerk-js@latest/dist/clerk.browser.js">
+    <link rel="stylesheet" href="css/login.css">
+
+    <!-- 1. Muat konstanta & konfigurasi terlebih dahulu di paling atas -->
+    <script src="js/constants.js"></script>
+    <script src="js/config.js"></script>
+
+    <!-- 2. Suntikkan script Clerk SDK secara dinamis menggunakan kunci dari CONFIG -->
+    <script>
+      if (typeof CONFIG !== 'undefined' && CONFIG.CLERK_PUBLISHABLE_KEY) {
+        const clerkScript = document.createElement('script');
+        clerkScript.async = true;
+        clerkScript.crossOrigin = 'anonymous';
+        clerkScript.id = 'clerk-sdk';
+        clerkScript.setAttribute('data-clerk-publishable-key', CONFIG.CLERK_PUBLISHABLE_KEY);
+        clerkScript.src = 'https://cdn.jsdelivr.net/npm/@clerk/clerk-js@latest/dist/clerk.browser.js';
+        document.head.appendChild(clerkScript);
+      } else {
+        console.error('CLERK_PUBLISHABLE_KEY tidak ditemukan di config.js');
+      }
     </script>
 
-    <link rel="stylesheet" href="css/login.css">
+    <!-- 3. Muat script logika aplikasi menggunakan atribut 'defer' agar aman membaca HTML -->
+    <script src="js/utils.js" defer></script>
+    <script src="js/crypto.js" defer></script>
+    <script src="js/auth.js" defer></script>
+    <script src="js/login.js" defer></script>
 </head>
 <body>
 
@@ -125,17 +142,7 @@
         </div>
     </div>
 
-    <!-- Load utility libraries first -->
-    <script src="js/constants.js"></script>
-    <script src="js/utils.js"></script>
-    
-    <!-- Load app files -->
-    <script src="js/config.js"></script>
-    <script src="js/crypto.js"></script>
-    <script src="js/auth.js"></script>
-    <script src="js/login.js"></script>
-    
-    <!-- Register service worker -->
+    <!-- Registrasi Service Worker -->
     <script>
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
