@@ -255,268 +255,29 @@
         <div class="stream-timer" id="streamTime">0:00</div>
 
         <div class="controls">
-            <button class="btn-ctrl btn-small" id="btnRewind" title="Klik: Reset Kecepatan | Tahan: Replay 30 Detik">
+            <button class="btn-ctrl btn-small" id="btnRewind" title="Klik: Reset Kecepatan | Tahan: Replay 30 Detik" type="button">
                 <i class='bx bx-rewind'></i>
             </button>
 
-            <button class="btn-ctrl btn-main" id="playBtn" title="Putar / Hentikan">
+            <button class="btn-ctrl btn-main" id="playBtn" title="Putar / Hentikan" type="button">
                 <i class='bx bx-play' id="playIcon"></i>
             </button>
 
-            <button class="btn-ctrl btn-small" id="btnForward" style="position: relative;" title="Klik: Ubah Kecepatan | Tahan: Live Catch-Up">
+            <button class="btn-ctrl btn-small" id="btnForward" style="position: relative;" title="Klik: Ubah Kecepatan | Tahan: Live Catch-Up" type="button">
                 <i class='bx bx-fast-forward'></i>
                 <span class="speed-badge" id="speedDisplay">1.0x</span>
             </button>
         </div>
     </div>
 
+    <!-- Load utility libraries first -->
+    <script src="js/constants.js"></script>
+    <script src="js/utils.js"></script>
+    
+    <!-- Load app files -->
     <script src="js/config.js"></script>
     <script src="js/crypto.js"></script>
     <script src="js/auth.js"></script>
-
-    <script>
-        document.addEventListener("DOMContentLoaded", function() {
-            // 1. PROTEKSI AKSES HALAMAN (WAJIB LOGIN)
-            if (typeof Auth !== 'undefined' && !Auth.isSessionValid()) {
-                window.location.href = CONFIG.LOGIN_PAGE || 'index.html';
-                return;
-            }
-
-            // TAMPILKAN NAMA USER
-            const session = Auth.getSession();
-            const userDisplay = document.getElementById("userDisplay");
-            if (session && session.username) {
-                userDisplay.innerText = session.username;
-            }
-
-            // 2. ELEMEN UI PLAYER
-            const playBtn = document.getElementById("playBtn");
-            const playIcon = document.getElementById("playIcon");
-            const albumArt = document.getElementById("albumArt");
-            const dotLive = document.getElementById("dotLive");
-            const statusIndicator = document.getElementById("statusIndicator");
-            const streamTime = document.getElementById("streamTime");
-            const speedDisplay = document.getElementById("speedDisplay");
-            const btnLogout = document.getElementById("btnLogout");
-
-            // ELEMEN INFORMASI TEKS DARI CONFIG
-            if (typeof CONFIG !== 'undefined') {
-                if (CONFIG.APP_NAME) document.getElementById("appTitle").innerText = CONFIG.APP_NAME;
-                if (CONFIG.APP_DESC) document.getElementById("appSub").innerText = CONFIG.APP_DESC;
-            }
-
-            // 3. VARIABEL STATE PLAYER
-            let audio = null;
-            let isPlaying = false;
-            let timerInterval = null;
-            let secondsElapsed = 0;
-            const speeds = [1.0, 1.25, 1.5, 2.0];
-            let speedIndex = 0;
-
-            const STREAM_URL = (typeof CONFIG !== 'undefined' && CONFIG.STREAM_URL) 
-                ? CONFIG.STREAM_URL 
-                : "https://b.alhastream.com:5125/radio";
-
-            // 4. SETUP MEDIASESSION API (KONTROL LAYAR KUNCI HP)
-            function setupMediaSession() {
-                if ('mediaSession' in navigator) {
-                    navigator.mediaSession.metadata = new MediaMetadata({
-                        title: CONFIG.APP_NAME || 'Ngaos Al Falah Ploso',
-                        artist: CONFIG.APP_DESC || 'Tafsir Jalalain & Shahih Bukhari',
-                        album: 'Al Falah Ploso Kediri',
-                        artwork: [
-                            { src: 'icon-192.png', sizes: '192x192', type: 'image/png' },
-                            { src: 'icon-512.png', sizes: '512x512', type: 'image/png' }
-                        ]
-                    });
-
-                    navigator.mediaSession.setActionHandler('play', () => togglePlay());
-                    navigator.mediaSession.setActionHandler('pause', () => togglePlay());
-                    navigator.mediaSession.setActionHandler('stop', () => stopStreaming());
-                }
-            }
-
-            // 5. MEMUTAR / MENGHENTIKAN STREAMING
-            function togglePlay() {
-                if (!isPlaying) {
-                    startStreaming();
-                } else {
-                    stopStreaming();
-                }
-            }
-
-            function startStreaming() {
-                statusIndicator.innerText = "MENGHUBUNGKAN...";
-                
-                // Hancurkan objek lama jika ada
-                if (audio) {
-                    audio.pause();
-                    audio.src = "";
-                    audio = null;
-                }
-
-                // Inisialisasi Audio Baru dengan Anti-Cache Query
-                audio = new Audio(STREAM_URL + "?cb=" + Date.now());
-                audio.crossOrigin = "anonymous";
-                audio.playbackRate = speeds[speedIndex];
-
-                audio.play().then(() => {
-                    isPlaying = true;
-                    playIcon.className = "bx bx-pause";
-                    playBtn.classList.add("playing");
-                    albumArt.classList.add("playing");
-                    dotLive.classList.add("active");
-                    statusIndicator.innerText = "SIARAN LIVE";
-                    
-                    startTimer();
-                    setupMediaSession();
-
-                    if ('mediaSession' in navigator) {
-                        navigator.mediaSession.playbackState = "playing";
-                    }
-                }).catch(err => {
-                    console.error("Gagal memutar audio:", err);
-                    stopStreaming();
-                    statusIndicator.innerText = "GAGAL TERHUBUNG";
-                });
-
-                // AUTO-RECONNECT SAAT KONEKSI EROR
-                audio.onerror = function() {
-                    if (isPlaying) {
-                        statusIndicator.innerText = "MENYAMBUNG KEMBALI...";
-                        setTimeout(() => { if (isPlaying) startStreaming(); }, 3000);
-                    }
-                };
-            }
-
-            function stopStreaming() {
-                if (audio) {
-                    audio.pause();
-                    audio.src = "";
-                    audio = null;
-                }
-                isPlaying = false;
-                playIcon.className = "bx bx-play";
-                playBtn.classList.remove("playing");
-                albumArt.classList.remove("playing");
-                dotLive.classList.remove("active");
-                statusIndicator.innerText = "OFFLINE";
-
-                stopTimer();
-
-                if ('mediaSession' in navigator) {
-                    navigator.mediaSession.playbackState = "none";
-                }
-            }
-
-            // 6. TIMER WAKTU MENDENGARKAN
-            function startTimer() {
-                stopTimer();
-                secondsElapsed = 0;
-                timerInterval = setInterval(() => {
-                    secondsElapsed++;
-                    let mins = Math.floor(secondsElapsed / 60);
-                    let secs = secondsElapsed % 60;
-                    streamTime.innerText = `${mins}:${secs < 10 ? '0' : ''}${secs}`;
-                }, 1000);
-            }
-
-            function stopTimer() {
-                if (timerInterval) clearInterval(timerInterval);
-                streamTime.innerText = "0:00";
-            }
-
-            // 7. PENANGANAN DUA AKSI (KLIK BIASA VS TAHAN TOMBOL)
-            function pasangFungsiDuaAksi(elemen, aksiKlik, aksiTahan) {
-                let timerTahan = null;
-                let sudahDiTahan = false;
-
-                const mulai = () => {
-                    sudahDiTahan = false;
-                    timerTahan = setTimeout(() => {
-                        sudahDiTahan = true;
-                        if (aksiTahan) aksiTahan();
-                    }, 600); // Tahan selama 600ms
-                };
-
-                const selesai = (e) => {
-                    clearTimeout(timerTahan);
-                    if (!sudahDiTahan) {
-                        if (e.type === 'touchend') e.preventDefault();
-                        if (aksiKlik) aksiKlik();
-                    }
-                };
-
-                elemen.addEventListener('mousedown', mulai);
-                elemen.addEventListener('mouseup', selesai);
-                elemen.addEventListener('touchstart', mulai, { passive: true });
-                elemen.addEventListener('touchend', selesai);
-            }
-
-            // TOMBOL REWIND (MUNDUR / RESET)
-            pasangFungsiDuaAksi(
-                document.getElementById("btnRewind"),
-                function aksiKlik() {
-                    speedIndex = 0;
-                    if (audio) audio.playbackRate = speeds[speedIndex];
-                    updateSpeedUI();
-                },
-                function aksiTahan() {
-                    if (audio && isPlaying) {
-                        audio.currentTime = Math.max(0, audio.currentTime - 30);
-                        statusIndicator.innerText = "↩ REPLAY 30s";
-                        setTimeout(() => { if (isPlaying) statusIndicator.innerText = "SIARAN LIVE"; }, 2000);
-                    }
-                }
-            );
-
-            // TOMBOL FORWARD (KECEPATAN / CATCH-UP)
-            pasangFungsiDuaAksi(
-                document.getElementById("btnForward"),
-                function aksiKlik() {
-                    speedIndex = (speedIndex + 1) % speeds.length;
-                    if (audio) audio.playbackRate = speeds[speedIndex];
-                    updateSpeedUI();
-                },
-                function aksiTahan() {
-                    if (isPlaying) {
-                        speedIndex = 0;
-                        updateSpeedUI();
-                        startStreaming(); // Catch-up langsung ke live stream terbaru
-                        statusIndicator.innerText = "⚡ CATCH-UP LIVE";
-                    }
-                }
-            );
-
-            function updateSpeedUI() {
-                speedDisplay.innerText = speeds[speedIndex] + "x";
-            }
-
-            // 8. EVENT LISTENER TOMBOL UTAMA
-            playBtn.addEventListener("click", togglePlay);
-
-            btnLogout.addEventListener("click", function() {
-                if (confirm("Apakah Anda yakin ingin keluar dari aplikasi?")) {
-                    stopStreaming();
-                    if (typeof Auth !== 'undefined') {
-                        Auth.logout();
-                    } else {
-                        localStorage.removeItem("radio_session");
-                        window.location.href = "index.html";
-                    }
-                }
-            });
-        });
-
-        // REGISTER SERVICE WORKER
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js')
-                    .then(reg => console.log('SW Terdaftar di Player!', reg))
-                    .catch(err => console.log('Gagal SW Player:', err));
-            });
-        }
-    </script>
+    <script src="js/player.js"></script>
 </body>
 </html>
-
