@@ -1,26 +1,41 @@
-// =========================================
-// AUTH.JS
-// Session & Auth Management (Clerk & PWA)
-// Ngaos Al Falah Ploso
-// =========================================
+/**
+ * =========================================
+ * AUTH.JS
+ * Version 4.2.0 - Session & Authentication
+ * =========================================
+ * Session & Auth Management (Clerk & PWA)
+ */
 
 const Auth = {
     /**
      * Membuat sesi lokal baru setelah login/register berhasil
      * @param {string} username - Nama pengguna
+     * @returns {boolean} - true jika berhasil
      */
     createSession: function(username) {
-        if (typeof CONFIG === 'undefined') return;
+        try {
+            if (typeof CONFIG === 'undefined') {
+                ErrorLogger.warn('CONFIG not available', { action: 'Auth.createSession' });
+                return false;
+            }
 
-        const now = Date.now();
-        const durationMs = (CONFIG.SESSION_HOURS || 4) * 60 * 60 * 1000;
-        const sessionData = {
-            username: username,
-            loginTime: now,
-            expireTime: now + durationMs
-        };
+            if (!username || typeof username !== 'string') {
+                throw new Error('Invalid username');
+            }
 
-        localStorage.setItem(CONFIG.SESSION_KEY, JSON.stringify(sessionData));
+            const now = Date.now();
+            const durationMs = (CONFIG.SESSION_HOURS || 4) * 60 * 60 * 1000;
+            const sessionData = {
+                username: username.trim(),
+                loginTime: now,
+                expireTime: now + durationMs
+            };
+
+            return StorageHelper.setItem(CONFIG.SESSION_KEY, sessionData);
+        } catch (error) {
+            ErrorLogger.log(error, { action: 'Auth.createSession' });
+            return false;
+        }
     },
 
     /**
@@ -28,20 +43,29 @@ const Auth = {
      * @returns {boolean}
      */
     isSessionValid: function() {
-        if (typeof CONFIG === 'undefined') return false;
-
-        const sessionRaw = localStorage.getItem(CONFIG.SESSION_KEY);
-        if (!sessionRaw) return false;
-
         try {
-            const session = JSON.parse(sessionRaw);
+            if (typeof CONFIG === 'undefined') return false;
+
+            const sessionRaw = StorageHelper.getItem(CONFIG.SESSION_KEY);
+            if (!sessionRaw) return false;
+
+            const session = typeof sessionRaw === 'string' 
+                ? JSON.parse(sessionRaw) 
+                : sessionRaw;
+
+            if (!session || typeof session.expireTime !== 'number') {
+                this.destroySession();
+                return false;
+            }
+
             if (Date.now() < session.expireTime) {
                 return true;
             } else {
                 this.destroySession(); // Hapus jika sudah kedaluwarsa
                 return false;
             }
-        } catch (e) {
+        } catch (error) {
+            ErrorLogger.log(error, { action: 'Auth.isSessionValid' });
             this.destroySession();
             return false;
         }
@@ -52,30 +76,39 @@ const Auth = {
      * @returns {Object|null}
      */
     getSession: function() {
-        if (!this.isSessionValid()) return null;
-        return JSON.parse(localStorage.getItem(CONFIG.SESSION_KEY));
+        try {
+            if (!this.isSessionValid()) return null;
+            
+            const sessionRaw = StorageHelper.getItem(CONFIG.SESSION_KEY);
+            return typeof sessionRaw === 'string' 
+                ? JSON.parse(sessionRaw) 
+                : sessionRaw;
+        } catch (error) {
+            ErrorLogger.log(error, { action: 'Auth.getSession' });
+            this.destroySession();
+            return null;
+        }
     },
 
     /**
      * Menghapus sesi lokal & logout dari Clerk
      */
     logout: async function() {
-        this.destroySession();
-
-        // Logout dari Clerk jika SDK tersedia
         try {
-            if (window.Clerk && window.Clerk.signOut) {
+            this.destroySession();
+
+            // Logout dari Clerk jika SDK tersedia
+            if (window.Clerk && typeof window.Clerk.signOut === 'function') {
                 await window.Clerk.signOut();
             }
-        } catch (err) {
-            console.error("Clerk Logout Error:", err);
-        }
-
-        // Redirect ke halaman login
-        if (typeof CONFIG !== 'undefined') {
-            window.location.href = CONFIG.LOGIN_PAGE;
-        } else {
-            window.location.href = "index.html";
+        } catch (error) {
+            ErrorLogger.log(error, { action: 'Auth.logout' });
+        } finally {
+            // Redirect ke halaman login
+            const loginPage = (typeof CONFIG !== 'undefined') 
+                ? CONFIG.LOGIN_PAGE 
+                : "index.html";
+            window.location.href = loginPage;
         }
     },
 
@@ -83,10 +116,31 @@ const Auth = {
      * Menghapus data sesi lokal saja
      */
     destroySession: function() {
-        if (typeof CONFIG !== 'undefined') {
-            localStorage.removeItem(CONFIG.SESSION_KEY);
-        } else {
-            localStorage.removeItem("radio_session");
+        try {
+            const key = (typeof CONFIG !== 'undefined') 
+                ? CONFIG.SESSION_KEY 
+                : "radio_session";
+            
+            StorageHelper.removeItem(key);
+        } catch (error) {
+            ErrorLogger.log(error, { action: 'Auth.destroySession' });
+        }
+    },
+
+    /**
+     * Extend sesi usia (refresh timeout)
+     */
+    refreshSession: function() {
+        try {
+            const session = this.getSession();
+            if (session) {
+                this.createSession(session.username);
+                return true;
+            }
+            return false;
+        } catch (error) {
+            ErrorLogger.log(error, { action: 'Auth.refreshSession' });
+            return false;
         }
     }
 };
