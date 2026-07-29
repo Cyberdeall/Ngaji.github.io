@@ -14,7 +14,7 @@ const CONFIG = Object.freeze({
     STREAM_URL: "https://b.alhastream.com:5125/radio",
 
     // Clerk Authentication
-    CLERK_PUBLISHABLE_KEY: "pk_live_Y2xlcmsubmdhb3NhbGZhbGFoLmNvbSQ",
+    CLERK_PUBLISHABLE_KEY: "pk_test_ZGFzaGluZy1idWctNjMuY2xlcmsuYWNjb3VudHMuZGV2JA",
 
     // Session & Cache
     SESSION_HOURS: 4,
