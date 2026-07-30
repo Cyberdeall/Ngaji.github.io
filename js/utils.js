@@ -1,7 +1,7 @@
 /**
  * =========================================
  * UTILS.JS
- * Version 4.2.1 - Utility Functions & Error Filtering
+ * Version 4.2.2 - Robust Error Filtering
  * =========================================
  */
 
@@ -9,19 +9,33 @@
 const ErrorLogger = {
     /**
      * Log error dengan context
-     * @param {Error|string} error - Error object atau message
+     * @param {Error|string|Object} error - Error object atau message
      * @param {Object} context - Context informasi tambahan
      */
     log: function(error, context = {}) {
-        const errorMessage = error?.message || String(error || '');
+        // Konversi error ke bentuk string dengan aman
+        let strError = '';
+        try {
+            if (typeof error === 'string') {
+                strError = error;
+            } else if (error?.message) {
+                strError = error.message;
+            } else {
+                strError = JSON.stringify(error || '');
+            }
+        } catch (e) {
+            strError = String(error || '');
+        }
 
-        // 💡 Abaikan peringatan otomatis dari Chrome (jaringan lambat / font fallback)
+        // 💡 Saring semua intervensi otomatis dan warning jaringan dari Chrome
         if (
-            errorMessage.includes('[Intervention]') || 
-            errorMessage.includes('Slow network') ||
-            errorMessage.includes('Fallback font')
+            !error ||
+            strError.includes('[Intervention]') || 
+            strError.includes('Slow network') ||
+            strError.includes('Fallback font') ||
+            strError.includes('unpkg.com')
         ) {
-            return;
+            return; // Abaikan log ini
         }
 
         const errorData = {
@@ -32,7 +46,7 @@ const ErrorLogger = {
             userAgent: navigator.userAgent,
         };
 
-        // Log ke console dalam development
+        // Log ke console hanya jika error sistem asli
         console.error('[ErrorLog]', errorData);
     },
 
@@ -48,13 +62,6 @@ const ErrorLogger = {
 const RateLimiter = {
     attempts: {},
 
-    /**
-     * Check if action is rate limited
-     * @param {string} key - Unique identifier
-     * @param {number} maxAttempts - Max attempts allowed
-     * @param {number} windowMs - Time window in milliseconds
-     * @returns {boolean} - true jika action diizinkan, false jika rate limited
-     */
     check: function(key, maxAttempts = 5, windowMs = 60000) {
         const now = Date.now();
         
@@ -62,30 +69,23 @@ const RateLimiter = {
             this.attempts[key] = [];
         }
 
-        // Hapus attempts yang sudah di luar time window
         this.attempts[key] = this.attempts[key]
             .filter(time => now - time < windowMs);
 
         if (this.attempts[key].length >= maxAttempts) {
-            return false; // Rate limited
+            return false;
         }
 
         this.attempts[key].push(now);
-        return true; // OK
+        return true;
     },
 
-    /**
-     * Reset rate limit untuk key tertentu
-     */
     reset: function(key) {
         if (this.attempts[key]) {
             delete this.attempts[key];
         }
     },
 
-    /**
-     * Get sisa attempts
-     */
     getRemaining: function(key, maxAttempts = 5, windowMs = 60000) {
         const now = Date.now();
         
@@ -102,32 +102,20 @@ const RateLimiter = {
 
 // ========== FORM VALIDATION ==========
 const FormValidator = {
-    /**
-     * Validasi format email
-     */
     isValidEmail: function(email) {
         const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         return regex.test(email);
     },
 
-    /**
-     * Validasi password strength
-     */
     isValidPassword: function(password, minLength = 8) {
         if (typeof password !== 'string') return false;
         return password.length >= minLength;
     },
 
-    /**
-     * Validasi OTP (6 digit)
-     */
     isValidOTP: function(otp) {
         return /^\d{6}$/.test(otp);
     },
 
-    /**
-     * Validasi nama lengkap
-     */
     isValidFullName: function(name) {
         return typeof name === 'string' && 
                name.trim().length >= 3 && 
@@ -137,9 +125,6 @@ const FormValidator = {
 
 // ========== LOCAL STORAGE HELPER ==========
 const StorageHelper = {
-    /**
-     * Set item dengan error handling
-     */
     setItem: function(key, value) {
         try {
             if (typeof value === 'object') {
@@ -154,9 +139,6 @@ const StorageHelper = {
         }
     },
 
-    /**
-     * Get item dengan error handling
-     */
     getItem: function(key, parse = false) {
         try {
             const value = localStorage.getItem(key);
@@ -172,9 +154,6 @@ const StorageHelper = {
         }
     },
 
-    /**
-     * Remove item
-     */
     removeItem: function(key) {
         try {
             localStorage.removeItem(key);
@@ -185,9 +164,6 @@ const StorageHelper = {
         }
     },
 
-    /**
-     * Clear all items
-     */
     clear: function() {
         try {
             localStorage.clear();
@@ -201,9 +177,6 @@ const StorageHelper = {
 
 // ========== DOM UTILITIES ==========
 const DOMUtils = {
-    /**
-     * Safe query selector
-     */
     q: function(selector) {
         try {
             return document.querySelector(selector);
@@ -213,9 +186,6 @@ const DOMUtils = {
         }
     },
 
-    /**
-     * Safe query selector all
-     */
     qa: function(selector) {
         try {
             return document.querySelectorAll(selector);
@@ -225,9 +195,6 @@ const DOMUtils = {
         }
     },
 
-    /**
-     * Get element by ID
-     */
     id: function(elementId) {
         const el = document.getElementById(elementId);
         if (!el) {
@@ -236,36 +203,24 @@ const DOMUtils = {
         return el;
     },
 
-    /**
-     * Add class dengan error handling
-     */
     addClass: function(element, className) {
         if (element && element.classList) {
             element.classList.add(className);
         }
     },
 
-    /**
-     * Remove class dengan error handling
-     */
     removeClass: function(element, className) {
         if (element && element.classList) {
             element.classList.remove(className);
         }
     },
 
-    /**
-     * Toggle class
-     */
     toggleClass: function(element, className) {
         if (element && element.classList) {
             element.classList.toggle(className);
         }
     },
 
-    /**
-     * Check apakah element punya class
-     */
     hasClass: function(element, className) {
         if (element && element.classList) {
             return element.classList.contains(className);
@@ -276,16 +231,10 @@ const DOMUtils = {
 
 // ========== DELAY / PROMISE HELPERS ==========
 const PromiseHelper = {
-    /**
-     * Delay execution dalam milliseconds
-     */
     delay: function(ms) {
         return new Promise(resolve => setTimeout(resolve, ms));
     },
 
-    /**
-     * Promise dengan timeout
-     */
     withTimeout: function(promise, timeoutMs, timeoutMessage = 'Operation timeout') {
         return Promise.race([
             promise,
@@ -298,9 +247,6 @@ const PromiseHelper = {
 
 // ========== FORMAT UTILITIES ==========
 const FormatUtils = {
-    /**
-     * Format time dari seconds ke MM:SS
-     */
     formatTime: function(seconds) {
         if (isNaN(seconds) || !isFinite(seconds)) return '0:00';
         
@@ -309,9 +255,6 @@ const FormatUtils = {
         return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
     },
 
-    /**
-     * Format bytes ke readable size
-     */
     formatBytes: function(bytes, decimals = 2) {
         if (bytes === 0) return '0 Bytes';
         
