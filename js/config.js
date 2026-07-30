@@ -1,6 +1,6 @@
 // =========================================
 // CONFIG.JS
-// Version 4.1.0 - Clerk Integration
+// Version 4.1.1 - GitHub Pages Compatible
 // =========================================
 
 const CONFIG = Object.freeze({
@@ -8,7 +8,7 @@ const CONFIG = Object.freeze({
     // Informasi Aplikasi
     APP_NAME: "NGAOS AL FALAH PLOSO",
     APP_DESC: "TAFSIR JALALAIN DAN SHAHIH BUKHARI",
-    APP_VERSION: "4.1.0",
+    APP_VERSION: "4.1.1",
 
     // Audio Stream
     STREAM_URL: "https://b.alhastream.com:5125/radio",
@@ -21,8 +21,8 @@ const CONFIG = Object.freeze({
     SESSION_KEY: "radio_session",
     REMEMBER_KEY: "remember_username",
 
-    // Redirect Pages
-    LOGIN_PAGE: "index.html",
-    PLAYER_PAGE: "player.html"
+    // Redirect Pages (Path Relatif)
+    LOGIN_PAGE: "./index.html",
+    PLAYER_PAGE: "./player.html"
 
 });
