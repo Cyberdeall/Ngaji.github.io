@@ -1,7 +1,7 @@
 /**
  * =========================================
  * UTILS.JS
- * Version 4.2.0 - Utility Functions
+ * Version 4.2.1 - Utility Functions & Error Filtering
  * =========================================
  */
 
@@ -13,6 +13,17 @@ const ErrorLogger = {
      * @param {Object} context - Context informasi tambahan
      */
     log: function(error, context = {}) {
+        const errorMessage = error?.message || String(error || '');
+
+        // 💡 Abaikan peringatan otomatis dari Chrome (jaringan lambat / font fallback)
+        if (
+            errorMessage.includes('[Intervention]') || 
+            errorMessage.includes('Slow network') ||
+            errorMessage.includes('Fallback font')
+        ) {
+            return;
+        }
+
         const errorData = {
             timestamp: new Date().toISOString(),
             message: error?.message || error,
@@ -312,3 +323,4 @@ const FormatUtils = {
         return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
     }
 };
+
