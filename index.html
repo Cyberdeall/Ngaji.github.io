@@ -45,6 +45,7 @@
     <div class="background"></div>
 
     <div class="container">
+        <!-- FORM LOGIN -->
         <div class="form-box login">
             <form id="loginForm">
                 <div class="logo-container">
@@ -67,6 +68,9 @@
                     <label><input type="checkbox" id="remember"> Ingat Saya</label>
                 </div>
 
+                <!-- Wadah Smart CAPTCHA untuk Clerk (Login) -->
+                <div id="clerk-captcha"></div>
+
                 <div id="message" class="alert-box"></div>
 
                 <button type="submit" class="btn" id="btnLogin">
@@ -76,6 +80,7 @@
             </form>
         </div>
 
+        <!-- FORM REGISTER -->
         <div class="form-box register">
             <form id="registerForm">
                 <div class="logo-container">
@@ -98,6 +103,9 @@
                     <i class='bx bxs-lock-alt'></i>
                     <i class='bx bx-hide toggle-pwd' data-target="regPassword"></i>
                 </div>
+
+                <!-- Wadah Smart CAPTCHA untuk Clerk (Register) -->
+                <div id="clerk-captcha"></div>
 
                 <div id="regMessage" class="alert-box"></div>
 
@@ -123,6 +131,7 @@
         </div>
     </div>
 
+    <!-- MODAL OTP -->
     <div id="otpModal" class="modal-overlay hidden">
         <div class="modal-card">
             <i class='bx bx-mail-send modal-icon'></i>
@@ -142,15 +151,16 @@
         </div>
     </div>
 
-    <!-- Registrasi Service Worker -->
+    <!-- REGISTRASI SERVICE WORKER -->
     <script>
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
           navigator.serviceWorker.register('./sw.js')
             .then(reg => console.log('Service Worker Terdaftar!', reg))
-            .catch(err => console.log('Gagal daftar SW:', err));
+            .catch(err => console.warn('Gagal daftar SW:', err));
         });
       }
     </script>
 </body>
 </html>
+
