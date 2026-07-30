@@ -1,7 +1,7 @@
 /**
  * =========================================
  * LOGIN.JS
- * Version 4.4.0 - Hybrid Verification (OTP, Magic Link & Device Trust)
+ * Version 4.4.1 - Fix GitHub Pages 404 & Relative Redirects
  * =========================================
  */
 
@@ -60,6 +60,13 @@ document.addEventListener("DOMContentLoaded", async function() {
         let currentSignUpAttempt = null;
         let currentSignInAttempt = null;
         let authMode = 'signup'; // 'signup' atau 'login'
+
+        // Cek pesan sukses pendaftaran dari sesi sebelumnya
+        const pendingRegSuccess = StorageHelper.getItem("reg_success_msg");
+        if (pendingRegSuccess) {
+            showSuccess(messageOutput, pendingRegSuccess);
+            StorageHelper.removeItem("reg_success_msg");
+        }
 
         // Load username jika pernah dicentang "Ingat Saya"
         if (rememberCheckbox && usernameInput) {
@@ -174,7 +181,7 @@ document.addEventListener("DOMContentLoaded", async function() {
                         const activeSessions = sessions.filter(s => s.status === "active");
 
                         if (activeSessions.length > 1) {
-                            await window.Clerk.signOut();
+                            await window.Clerk.signOut({ redirectUrl: window.location.pathname });
                             showError(messageOutput, 
                                 "⛔ GAGAL MASUK: AKUN SEDANG DIGUNAKAN\n\n" +
                                 "Akun Anda saat ini sedang aktif di perangkat lain. Satu akun hanya dapat digunakan pada 1 perangkat dalam satu waktu."
@@ -187,7 +194,7 @@ document.addEventListener("DOMContentLoaded", async function() {
                         // Cek Persetujuan Admin
                         const isApproved = user.publicMetadata?.approved;
                         if (isApproved === false) {
-                            await window.Clerk.signOut();
+                            await window.Clerk.signOut({ redirectUrl: window.location.pathname });
                             showError(messageOutput, 
                                 "⏳ AKUN MENUNGGU PERSETUJUAN ADMIN\n\n" +
                                 "Pendaftaran Anda telah berhasil, namun akun Anda masih dalam proses verifikasi oleh Admin."
@@ -340,9 +347,17 @@ document.addEventListener("DOMContentLoaded", async function() {
 
                         if (verification.status === "complete") {
                             DOMUtils.addClass(otpModal, "hidden");
-                            await window.Clerk.signOut();
-                            DOMUtils.removeClass(container, "active");
+                            
+                            // Simpan pesan sukses sementara sebelum Sign Out
+                            StorageHelper.setItem("reg_success_msg", 
+                                "✅ PENDAFTARAN BERHASIL!\n\n" +
+                                "Akun Anda telah terverifikasi. Silakan masuk menggunakan email dan kata sandi Anda."
+                            );
 
+                            // Sign Out aman tanpa redirect ke root domain '/'
+                            await window.Clerk.signOut({ redirectUrl: window.location.pathname });
+
+                            DOMUtils.removeClass(container, "active");
                             showSuccess(messageOutput, 
                                 "✅ PENDAFTARAN BERHASIL!\n\n" +
                                 "Akun Anda telah terverifikasi. Silakan masuk menggunakan email dan kata sandi Anda."
@@ -404,7 +419,7 @@ document.addEventListener("DOMContentLoaded", async function() {
                     StorageHelper.removeItem(CONFIG.REMEMBER_KEY);
                 }
                 
-                window.location.href = CONFIG.PLAYER_PAGE;
+                window.location.href = CONFIG.PLAYER_PAGE || './player.html';
             } catch (error) {
                 ErrorLogger.log(error, { action: 'saveSesiAndRedirect' });
             }
