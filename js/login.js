@@ -1,7 +1,7 @@
 /**
  * =========================================
  * LOGIN.JS
- * Version 4.5.1 - Dynamic Clerk SDK Loader & Direct Player Redirect
+ * Version 4.5.0 - Direct Player Redirect on Register OTP Verification
  * =========================================
  */
 
@@ -70,51 +70,15 @@ document.addEventListener("DOMContentLoaded", async function() {
             }
         }
 
-        // ========== 4. INISIALISASI CLERK SDK (DYNAMIC LOAD) ==========
-        
-        // Helper untuk memuat script Clerk secara otomatis dari JavaScript
-        function loadClerkSDK() {
-            return new Promise((resolve, reject) => {
-                if (window.Clerk) {
-                    return resolve(true);
-                }
-
-                let script = document.querySelector('script[src*="clerk.browser.js"]');
-                if (!script) {
-                    script = document.createElement('script');
-                    script.src = 'https://cdn.jsdelivr.net/npm/@clerk/clerk-js@latest/dist/clerk.browser.js';
-                    script.async = true;
-                    script.crossOrigin = 'anonymous';
-                    if (typeof CONFIG !== 'undefined' && CONFIG.CLERK_PUBLISHABLE_KEY) {
-                        script.setAttribute('data-clerk-publishable-key', CONFIG.CLERK_PUBLISHABLE_KEY);
-                    }
-                    document.head.appendChild(script);
-                }
-
-                script.onload = () => resolve(true);
-                script.onerror = () => reject(new Error('Gagal mengunduh SDK Clerk dari CDN.'));
-            });
-        }
-
+        // ========== 4. INISIALISASI CLERK SDK ==========
         async function initClerk() {
             try {
-                // 1. Muat script Clerk secara dinamis jika belum ada di halaman
-                await loadClerkSDK();
-
-                // 2. Tunggu sebentar hingga window.Clerk benar-benar siap
-                let retries = 0;
-                while (!window.Clerk && retries < 20) {
-                    await PromiseHelper.delay(100);
-                    retries++;
-                }
-
                 if (!window.Clerk) {
                     showError(messageOutput, "Gagal memuat SDK Keamanan. Periksa koneksi internet Anda.");
                     ErrorLogger.log(new Error('Clerk SDK not loaded'), { action: 'initClerk' });
                     return false;
                 }
 
-                // 3. Inisialisasi Clerk jika belum loaded
                 if (!window.Clerk.loaded) {
                     await PromiseHelper.withTimeout(
                         window.Clerk.load({ 
