@@ -1,7 +1,7 @@
 /**
  * =========================================
  * PLAYER.JS
- * Version 4.2.0 - Audio Player Logic
+ * Version 4.4.0 - Engine Preserved & Media Visualizer Integrated
  * =========================================
  * Semua logika player untuk Ngaos Al Falah Ploso
  */
@@ -18,24 +18,12 @@ const Player = {
     maxReconnectAttempts: 5,
 
     // Speed options
-    speeds: CONSTANTS.PLAYBACK_SPEEDS || [1.0, 1.25, 1.5, 2.0],
+    speeds: (typeof CONSTANTS !== 'undefined' && CONSTANTS.PLAYBACK_SPEEDS) 
+            ? CONSTANTS.PLAYBACK_SPEEDS 
+            : [1.0, 1.25, 1.5, 2.0],
 
     // DOM elements
-    elements: {
-        playBtn: null,
-        playIcon: null,
-        albumArt: null,
-        dotLive: null,
-        statusIndicator: null,
-        streamTime: null,
-        speedDisplay: null,
-        btnLogout: null,
-        btnRewind: null,
-        btnForward: null,
-        userDisplay: null,
-        appTitle: null,
-        appSub: null,
-    },
+    elements: {},
 
     /**
      * Inisialisasi player
@@ -43,8 +31,8 @@ const Player = {
     init: function() {
         try {
             // 1. PROTEKSI AKSES HALAMAN (WAJIB LOGIN)
-            if (typeof Auth !== 'undefined' && !Auth.isSessionValid()) {
-                window.location.href = CONFIG.LOGIN_PAGE || 'index.html';
+            if (typeof Auth !== 'undefined' && typeof Auth.isSessionValid === 'function' && !Auth.isSessionValid()) {
+                window.location.href = (typeof CONFIG !== 'undefined' && CONFIG.LOGIN_PAGE) ? CONFIG.LOGIN_PAGE : 'index.html';
                 return false;
             }
 
@@ -66,10 +54,11 @@ const Player = {
             // 7. Register service worker
             this.registerServiceWorker();
 
-            console.log('[Player] Initialized successfully');
+            console.log('[Player] Initialized successfully with Visualizer Support');
             return true;
         } catch (error) {
-            ErrorLogger.log(error, { action: 'Player.init' });
+            if (typeof ErrorLogger !== 'undefined') ErrorLogger.log(error, { action: 'Player.init' });
+            else console.error('[Player.init]', error);
             return false;
         }
     },
@@ -78,20 +67,24 @@ const Player = {
      * Cache semua DOM elements
      */
     cacheElements: function() {
+        const getEl = (id) => (typeof DOMUtils !== 'undefined' && DOMUtils.id) ? DOMUtils.id(id) : document.getElementById(id);
+
         this.elements = {
-            playBtn: DOMUtils.id("playBtn"),
-            playIcon: DOMUtils.id("playIcon"),
-            albumArt: DOMUtils.id("albumArt"),
-            dotLive: DOMUtils.id("dotLive"),
-            statusIndicator: DOMUtils.id("statusIndicator"),
-            streamTime: DOMUtils.id("streamTime"),
-            speedDisplay: DOMUtils.id("speedDisplay"),
-            btnLogout: DOMUtils.id("btnLogout"),
-            btnRewind: DOMUtils.id("btnRewind"),
-            btnForward: DOMUtils.id("btnForward"),
-            userDisplay: DOMUtils.id("userDisplay"),
-            appTitle: DOMUtils.id("appTitle"),
-            appSub: DOMUtils.id("appSub"),
+            playBtn: getEl("playBtn"),
+            playIcon: getEl("playIcon"),
+            albumArt: getEl("albumArt"),
+            dotLive: getEl("dotLive"),
+            statusIndicator: getEl("statusIndicator"),
+            streamTime: getEl("streamTime"),
+            speedDisplay: getEl("speedDisplay"),
+            btnLogout: getEl("btnLogout"),
+            btnRewind: getEl("btnRewind"),
+            btnForward: getEl("btnForward"),
+            userDisplay: getEl("userDisplay"),
+            appTitle: getEl("appTitle"),
+            appSub: getEl("appSub"),
+            staticLogo: getEl("staticLogo"),
+            liveVideo: getEl("liveVideo")
         };
     },
 
@@ -130,12 +123,12 @@ const Player = {
         try {
             if (!this.elements.userDisplay) return;
 
-            const session = typeof Auth !== 'undefined' ? Auth.getSession() : null;
+            const session = (typeof Auth !== 'undefined' && typeof Auth.getSession === 'function') ? Auth.getSession() : null;
             if (session && session.username) {
                 this.elements.userDisplay.textContent = session.username;
             }
         } catch (error) {
-            ErrorLogger.log(error, { action: 'Player.loadUserInfo' });
+            if (typeof ErrorLogger !== 'undefined') ErrorLogger.log(error, { action: 'Player.loadUserInfo' });
         }
     },
 
@@ -154,20 +147,23 @@ const Player = {
                 this.elements.appSub.textContent = CONFIG.APP_DESC;
             }
         } catch (error) {
-            ErrorLogger.log(error, { action: 'Player.loadConfigInfo' });
+            if (typeof ErrorLogger !== 'undefined') ErrorLogger.log(error, { action: 'Player.loadConfigInfo' });
         }
     },
 
     /**
-     * Setup Media Session API untuk kontrol lock screen
+     * Setup Media Session API
      */
     setupMediaSession: function() {
         try {
             if (!('mediaSession' in navigator)) return;
 
+            const appName = (typeof CONFIG !== 'undefined' && CONFIG.APP_NAME) ? CONFIG.APP_NAME : 'Ngaos Al Falah Ploso';
+            const appDesc = (typeof CONFIG !== 'undefined' && CONFIG.APP_DESC) ? CONFIG.APP_DESC : 'Tafsir Jalalain & Shahih Bukhari';
+
             navigator.mediaSession.metadata = new MediaMetadata({
-                title: CONFIG.APP_NAME || 'Ngaos Al Falah Ploso',
-                artist: CONFIG.APP_DESC || 'Tafsir Jalalain & Shahih Bukhari',
+                title: appName,
+                artist: appDesc,
                 album: 'Al Falah Ploso Kediri',
                 artwork: [
                     { src: 'icon-192.png', sizes: '192x192', type: 'image/png' },
@@ -179,7 +175,7 @@ const Player = {
             navigator.mediaSession.setActionHandler('pause', () => this.togglePlay());
             navigator.mediaSession.setActionHandler('stop', () => this.stopStreaming());
         } catch (error) {
-            ErrorLogger.log(error, { action: 'Player.setupMediaSession' });
+            if (typeof ErrorLogger !== 'undefined') ErrorLogger.log(error, { action: 'Player.setupMediaSession' });
         }
     },
 
@@ -194,7 +190,7 @@ const Player = {
                 this.startStreaming();
             }
         } catch (error) {
-            ErrorLogger.log(error, { action: 'Player.togglePlay' });
+            if (typeof ErrorLogger !== 'undefined') ErrorLogger.log(error, { action: 'Player.togglePlay' });
         }
     },
 
@@ -214,44 +210,65 @@ const Player = {
                 this.audio = null;
             }
 
-            // Get stream URL from config
             const streamUrl = (typeof CONFIG !== 'undefined' && CONFIG.STREAM_URL)
                 ? CONFIG.STREAM_URL
-                : CONSTANTS.STREAM.URL;
+                : (typeof CONSTANTS !== 'undefined' && CONSTANTS.STREAM?.URL ? CONSTANTS.STREAM.URL : "");
 
-            // Create new audio with cache busting
-            this.audio = new Audio(streamUrl + (CONSTANTS.STREAM.CACHE_QUERY ? "?cb=" + Date.now() : ""));
+            const cacheQuery = (typeof CONSTANTS !== 'undefined' && CONSTANTS.STREAM?.CACHE_QUERY !== undefined)
+                ? CONSTANTS.STREAM.CACHE_QUERY
+                : true;
+
+            // Flag state sementara
+            this.isPlaying = true;
+            this.errorHandled = false;
+
+            this.audio = new Audio(streamUrl + (cacheQuery ? "?cb=" + Date.now() : ""));
             this.audio.crossOrigin = "anonymous";
             this.audio.playbackRate = this.speeds[this.speedIndex];
 
-            // Reset error flag
-            this.errorHandled = false;
-            this.reconnectAttempts = 0;
-
-            // Try to play
             this.audio.play()
-                .then(() => this.handlePlaySuccess())
+                .then(() => {
+                    // Safe guard anti race condition
+                    if (!this.isPlaying) {
+                        if (this.audio) {
+                            this.audio.pause();
+                            this.audio.src = "";
+                        }
+                        return;
+                    }
+                    this.handlePlaySuccess();
+                })
                 .catch(err => this.handlePlayError(err));
 
-            // Setup error handler
             this.audio.onerror = () => this.handleAudioError();
         } catch (error) {
-            ErrorLogger.log(error, { action: 'Player.startStreaming' });
+            if (typeof ErrorLogger !== 'undefined') ErrorLogger.log(error, { action: 'Player.startStreaming' });
             this.stopStreaming();
         }
     },
 
     /**
-     * Handle play success
+     * Handle play success (Termasuk Pergantian Visual Logo -> Video)
      */
     handlePlaySuccess: function() {
         try {
             this.isPlaying = true;
+            this.reconnectAttempts = 0; // Reset koneksi ulang setelah berhasil
+
             if (this.elements.playIcon) this.elements.playIcon.className = "bx bx-pause";
-            if (this.elements.playBtn) DOMUtils.addClass(this.elements.playBtn, "playing");
-            if (this.elements.albumArt) DOMUtils.addClass(this.elements.albumArt, "playing");
-            if (this.elements.dotLive) DOMUtils.addClass(this.elements.dotLive, "active");
+            
+            this.addClass(this.elements.playBtn, "playing");
+            this.addClass(this.elements.albumArt, "playing");
+            this.addClass(this.elements.dotLive, "active");
+
             if (this.elements.statusIndicator) this.elements.statusIndicator.textContent = "SIARAN LIVE";
+
+            // FITUR BARU: Sembunyikan Logo Statis & Putar Video
+            if (this.elements.staticLogo) this.elements.staticLogo.style.display = 'none';
+            if (this.elements.liveVideo) {
+                this.elements.liveVideo.style.display = 'block';
+                this.elements.liveVideo.play().catch(e => console.log('[Player] Autoplay Video Warning:', e));
+            }
 
             this.startTimer();
 
@@ -259,7 +276,7 @@ const Player = {
                 navigator.mediaSession.playbackState = "playing";
             }
         } catch (error) {
-            ErrorLogger.log(error, { action: 'Player.handlePlaySuccess' });
+            if (typeof ErrorLogger !== 'undefined') ErrorLogger.log(error, { action: 'Player.handlePlaySuccess' });
         }
     },
 
@@ -270,14 +287,14 @@ const Player = {
         try {
             if (!this.errorHandled) {
                 this.errorHandled = true;
-                ErrorLogger.log(error, { action: 'Player.handlePlayError' });
+                if (typeof ErrorLogger !== 'undefined') ErrorLogger.log(error, { action: 'Player.handlePlayError' });
                 this.stopStreaming();
                 if (this.elements.statusIndicator) {
                     this.elements.statusIndicator.textContent = "GAGAL TERHUBUNG";
                 }
             }
         } catch (err) {
-            ErrorLogger.log(err, { action: 'Player.handlePlayError' });
+            if (typeof ErrorLogger !== 'undefined') ErrorLogger.log(err, { action: 'Player.handlePlayError' });
         }
     },
 
@@ -290,7 +307,6 @@ const Player = {
 
             this.reconnectAttempts++;
 
-            // Stop jika sudah mencoba terlalu banyak kali
             if (this.reconnectAttempts >= this.maxReconnectAttempts) {
                 this.errorHandled = true;
                 if (this.elements.statusIndicator) {
@@ -304,34 +320,47 @@ const Player = {
                 this.elements.statusIndicator.textContent = `MENYAMBUNG KEMBALI (${this.reconnectAttempts}/${this.maxReconnectAttempts})...`;
             }
 
-            // Auto-reconnect dengan delay
+            const delay = (typeof CONSTANTS !== 'undefined' && CONSTANTS.UI?.RECONNECT_DELAY) ? CONSTANTS.UI.RECONNECT_DELAY : 3000;
+
             setTimeout(() => {
                 if (this.isPlaying) {
                     this.startStreaming();
                 }
-            }, CONSTANTS.UI.RECONNECT_DELAY);
+            }, delay);
         } catch (error) {
-            ErrorLogger.log(error, { action: 'Player.handleAudioError' });
+            if (typeof ErrorLogger !== 'undefined') ErrorLogger.log(error, { action: 'Player.handleAudioError' });
         }
     },
 
     /**
-     * Stop streaming
+     * Stop streaming (Termasuk Pergantian Visual Video -> Logo Statis)
      */
     stopStreaming: function() {
         try {
+            this.isPlaying = false;
+
             if (this.audio) {
                 this.audio.pause();
                 this.audio.src = "";
                 this.audio = null;
             }
 
-            this.isPlaying = false;
             if (this.elements.playIcon) this.elements.playIcon.className = "bx bx-play";
-            if (this.elements.playBtn) DOMUtils.removeClass(this.elements.playBtn, "playing");
-            if (this.elements.albumArt) DOMUtils.removeClass(this.elements.albumArt, "playing");
-            if (this.elements.dotLive) DOMUtils.removeClass(this.elements.dotLive, "active");
+
+            this.removeClass(this.elements.playBtn, "playing");
+            this.removeClass(this.elements.albumArt, "playing");
+            this.removeClass(this.elements.dotLive, "active");
+
             if (this.elements.statusIndicator) this.elements.statusIndicator.textContent = "OFFLINE";
+
+            // FITUR BARU: Hentikan Video & Tampilkan Kembali Logo Statis
+            if (this.elements.liveVideo) {
+                this.elements.liveVideo.pause();
+                this.elements.liveVideo.style.display = 'none';
+            }
+            if (this.elements.staticLogo) {
+                this.elements.staticLogo.style.display = 'block';
+            }
 
             this.stopTimer();
 
@@ -339,7 +368,7 @@ const Player = {
                 navigator.mediaSession.playbackState = "none";
             }
         } catch (error) {
-            ErrorLogger.log(error, { action: 'Player.stopStreaming' });
+            if (typeof ErrorLogger !== 'undefined') ErrorLogger.log(error, { action: 'Player.stopStreaming' });
         }
     },
 
@@ -352,7 +381,9 @@ const Player = {
         this.timerInterval = setInterval(() => {
             this.secondsElapsed++;
             if (this.elements.streamTime) {
-                this.elements.streamTime.textContent = FormatUtils.formatTime(this.secondsElapsed);
+                const mins = Math.floor(this.secondsElapsed / 60);
+                const secs = this.secondsElapsed % 60;
+                this.elements.streamTime.textContent = `${mins}:${secs < 10 ? '0' : ''}${secs}`;
             }
         }, 1000);
     },
@@ -371,19 +402,20 @@ const Player = {
     },
 
     /**
-     * Setup dual-action button (click vs hold)
+     * Setup dual-action button
      */
     setupDualActionButton: function(element, clickAction, holdAction) {
         try {
             let holdTimer = null;
             let isHeld = false;
+            const duration = (typeof CONSTANTS !== 'undefined' && CONSTANTS.UI?.TOUCH_HOLD_DURATION) ? CONSTANTS.UI.TOUCH_HOLD_DURATION : 600;
 
             const onStart = () => {
                 isHeld = false;
                 holdTimer = setTimeout(() => {
                     isHeld = true;
                     if (holdAction) holdAction();
-                }, CONSTANTS.UI.TOUCH_HOLD_DURATION);
+                }, duration);
             };
 
             const onEnd = (e) => {
@@ -394,17 +426,24 @@ const Player = {
                 }
             };
 
+            const onCancel = () => {
+                clearTimeout(holdTimer);
+                isHeld = false;
+            };
+
             element.addEventListener('mousedown', onStart);
             element.addEventListener('mouseup', onEnd);
             element.addEventListener('touchstart', onStart, { passive: true });
-            element.addEventListener('touchend', onEnd, { passive: true });
+            element.addEventListener('touchend', onEnd, { passive: false });
+            element.addEventListener('touchmove', onCancel, { passive: true });
+            element.addEventListener('touchcancel', onCancel, { passive: true });
         } catch (error) {
-            ErrorLogger.log(error, { action: 'Player.setupDualActionButton' });
+            if (typeof ErrorLogger !== 'undefined') ErrorLogger.log(error, { action: 'Player.setupDualActionButton' });
         }
     },
 
     /**
-     * Reset kecepatan playback
+     * Reset kecepatan
      */
     resetSpeed: function() {
         try {
@@ -412,12 +451,12 @@ const Player = {
             if (this.audio) this.audio.playbackRate = this.speeds[this.speedIndex];
             this.updateSpeedUI();
         } catch (error) {
-            ErrorLogger.log(error, { action: 'Player.resetSpeed' });
+            if (typeof ErrorLogger !== 'undefined') ErrorLogger.log(error, { action: 'Player.resetSpeed' });
         }
     },
 
     /**
-     * Change kecepatan playback
+     * Change kecepatan
      */
     changeSpeed: function() {
         try {
@@ -425,7 +464,7 @@ const Player = {
             if (this.audio) this.audio.playbackRate = this.speeds[this.speedIndex];
             this.updateSpeedUI();
         } catch (error) {
-            ErrorLogger.log(error, { action: 'Player.changeSpeed' });
+            if (typeof ErrorLogger !== 'undefined') ErrorLogger.log(error, { action: 'Player.changeSpeed' });
         }
     },
 
@@ -455,7 +494,7 @@ const Player = {
                 }
             }
         } catch (error) {
-            ErrorLogger.log(error, { action: 'Player.rewind30Seconds' });
+            if (typeof ErrorLogger !== 'undefined') ErrorLogger.log(error, { action: 'Player.rewind30Seconds' });
         }
     },
 
@@ -473,7 +512,7 @@ const Player = {
                 }
             }
         } catch (error) {
-            ErrorLogger.log(error, { action: 'Player.liveSync' });
+            if (typeof ErrorLogger !== 'undefined') ErrorLogger.log(error, { action: 'Player.liveSync' });
         }
     },
 
@@ -484,15 +523,15 @@ const Player = {
         try {
             if (confirm("Apakah Anda yakin ingin keluar dari aplikasi?")) {
                 this.stopStreaming();
-                if (typeof Auth !== 'undefined') {
+                if (typeof Auth !== 'undefined' && typeof Auth.logout === 'function') {
                     Auth.logout();
                 } else {
-                    StorageHelper.removeItem("radio_session");
-                    window.location.href = "index.html";
+                    localStorage.removeItem("radio_session");
+                    window.location.href = (typeof CONFIG !== 'undefined' && CONFIG.LOGIN_PAGE) ? CONFIG.LOGIN_PAGE : "index.html";
                 }
             }
         } catch (error) {
-            ErrorLogger.log(error, { action: 'Player.handleLogout' });
+            if (typeof ErrorLogger !== 'undefined') ErrorLogger.log(error, { action: 'Player.handleLogout' });
         }
     },
 
@@ -503,14 +542,35 @@ const Player = {
         try {
             if (!('serviceWorker' in navigator)) return;
 
-            window.addEventListener('load', () => {
+            const register = () => {
                 navigator.serviceWorker.register('./sw.js')
                     .then(reg => console.log('[Player] Service Worker registered:', reg))
-                    .catch(err => ErrorLogger.log(err, { action: 'ServiceWorker.register' }));
-            });
+                    .catch(err => {
+                        if (typeof ErrorLogger !== 'undefined') ErrorLogger.log(err, { action: 'ServiceWorker.register' });
+                    });
+            };
+
+            if (document.readyState === 'complete') {
+                register();
+            } else {
+                window.addEventListener('load', register);
+            }
         } catch (error) {
-            ErrorLogger.log(error, { action: 'Player.registerServiceWorker' });
+            if (typeof ErrorLogger !== 'undefined') ErrorLogger.log(error, { action: 'Player.registerServiceWorker' });
         }
+    },
+
+    // Helper DOM Class Utilities
+    addClass: function(el, cls) {
+        if (!el) return;
+        if (typeof DOMUtils !== 'undefined' && DOMUtils.addClass) DOMUtils.addClass(el, cls);
+        else el.classList.add(cls);
+    },
+
+    removeClass: function(el, cls) {
+        if (!el) return;
+        if (typeof DOMUtils !== 'undefined' && DOMUtils.removeClass) DOMUtils.removeClass(el, cls);
+        else el.classList.remove(cls);
     }
 };
 
