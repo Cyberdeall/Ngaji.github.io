@@ -2,410 +2,332 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Ngaos Al Falah Ploso - Live Audio Player</title>
-    
-    <!-- Google Fonts & Boxicons -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ngaos Player - Neumorphism</title>
+    <!-- Boxicons CDN -->
     <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
-
+    
     <style>
-        :root {
-            --bg-main: #0a0e14;
-            --bg-gradient: radial-gradient(circle at 50% 0%, #132219 0%, #0a0e14 75%);
-            --card-bg: rgba(18, 26, 20, 0.75);
-            --card-border: rgba(234, 179, 8, 0.18);
-            --accent-emerald: #10b981;
-            --accent-gold: #eab308;
-            --accent-gold-glow: rgba(234, 179, 8, 0.3);
-            --text-primary: #f8fafc;
-            --text-secondary: #94a3b8;
-            --danger-color: #ef4444;
-        }
+        /* =========================================
+           PLAYER STYLES - Dark Neumorphism
+           Ngaos Al Falah Ploso
+           ========================================= */
 
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: #1e222b;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            min-height: 100dvh;
+            padding: 20px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .background {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, #2a2f3d 0%, #1e222b 100%);
+            z-index: 1;
+        }
+
+        /* Container Utama Player Neumorphic */
+        .player-container {
+            position: relative;
+            width: 100%;
+            max-width: 420px;
+            background: #232732;
+            border-radius: 40px;
+            box-shadow: 12px 12px 24px #14161c, -12px -12px 24px #323848;
+            padding: 30px;
+            z-index: 2;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+
+        /* Status Bar Top (Badge Live & Session) */
+        .top-bar {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .live-badge {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 14px;
+            background: #232732;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: bold;
+            color: #ff5722;
+            letter-spacing: 0.5px;
+            box-shadow: inset 3px 3px 6px #14161c, inset -3px -3px 6px #323848;
+        }
+
+        .live-dot {
+            width: 8px;
+            height: 8px;
+            background-color: #ff5722;
+            border-radius: 50%;
+            box-shadow: 0 0 8px #ff5722;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.4; transform: scale(0.8); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+
+        .user-status {
+            font-size: 11px;
+            color: #8a92a6;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        /* Display Media (Frame Inset untuk Logo / Video Loop) */
+        .media-display {
+            position: relative;
+            width: 200px;
+            height: 200px;
+            border-radius: 50%;
+            background: #232732;
+            box-shadow: inset 8px 8px 16px #14161c, inset -8px -8px 16px #323848;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            padding: 10px;
+        }
+
+        .media-content {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        /* Elemen tersembunyi */
+        .hidden {
+            display: none !important;
+        }
+
+        /* Info Judul & Subtitle */
+        .track-info {
+            text-align: center;
+        }
+
+        .track-info h1 {
+            font-size: 18px;
+            color: #fff;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .track-info .subtitle {
+            font-size: 12px;
+            color: #8a92a6;
+            letter-spacing: 0.5px;
+        }
+
+        /* Timeline & Progress Bar */
+        .progress-area {
+            width: 100%;
+        }
+
+        .progress-bar-container {
+            width: 100%;
+            height: 10px;
+            background: #232732;
+            border-radius: 20px;
+            box-shadow: inset 3px 3px 6px #14161c, inset -3px -3px 6px #323848;
+            position: relative;
+            cursor: pointer;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            width: 0%;
+            background: #ff5722;
+            border-radius: 20px;
+            transition: width 0.1s linear;
+        }
+
+        .time-stamps {
+            display: flex;
+            justify-content: space-between;
+            font-size: 11px;
+            color: #8a92a6;
+            margin-top: 8px;
+        }
+
+        /* Tombol Kontrol Player */
+        .controls-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            width: 100%;
+        }
+
+        .btn-ctrl {
+            background: #232732;
+            border: none;
+            outline: none;
+            border-radius: 50%;
+            color: #8a92a6;
+            font-size: 18px;
+            cursor: pointer;
+            box-shadow: 6px 6px 12px #14161c, -6px -6px 12px #323848;
+            transition: 0.2s ease;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 48px;
+            height: 48px;
             user-select: none;
             -webkit-user-select: none;
         }
 
-        body {
-            background: var(--bg-main);
-            background-image: var(--bg-gradient);
-            color: var(--text-primary);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 1rem;
-            overflow-x: hidden;
-        }
-
-        /* CARD MAIN CONTAINER */
-        .player-card {
-            width: 100%;
-            max-width: 440px;
-            background: var(--card-bg);
-            backdrop-filter: blur(24px);
-            -webkit-backdrop-filter: blur(24px);
-            border: 1px solid var(--card-border);
-            border-radius: 32px;
-            padding: 1.75rem;
-            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6), inset 0 1px 1px rgba(255, 255, 255, 0.1);
-            display: flex;
-            flex-direction: column;
-            gap: 1.5rem;
-            transition: all 0.3s ease;
-        }
-
-        /* TOP USER BAR */
-        .top-bar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .user-info {
-            display: flex;
-            align-items: center;
-            gap: 0.65rem;
-            background: rgba(255, 255, 255, 0.04);
-            padding: 0.4rem 0.9rem 0.4rem 0.5rem;
-            border-radius: 50px;
-            border: 1px solid rgba(255, 255, 255, 0.06);
-        }
-
-        .avatar-icon {
-            width: 30px;
-            height: 30px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, var(--accent-gold), #b45309);
-            color: #000;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.1rem;
-            font-weight: 700;
-        }
-
-        .username {
-            font-size: 0.85rem;
-            font-weight: 600;
-            color: var(--text-primary);
-            max-width: 130px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .btn-icon {
-            background: rgba(255, 255, 255, 0.04);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            color: var(--text-secondary);
-            width: 42px;
-            height: 42px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.3rem;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-
-        .btn-icon:hover {
-            background: rgba(239, 68, 68, 0.15);
-            color: var(--danger-color);
-            border-color: rgba(239, 68, 68, 0.3);
-        }
-
-        /* MEDIA DISPLAY (LOGO & VIDEO SWITCHER) */
-        .media-wrapper {
-            position: relative;
-            width: 100%;
-            max-width: 260px;
-            aspect-ratio: 1 / 1;
-            margin: 0 auto;
-            border-radius: 28px;
-            overflow: hidden;
-            background: #0f172a;
-            border: 2px solid rgba(234, 179, 8, 0.25);
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
-            transition: all 0.4s ease;
-        }
-
-        .media-wrapper.playing {
-            border-color: var(--accent-emerald);
-            box-shadow: 0 0 35px rgba(16, 185, 129, 0.35);
-        }
-
-        .media-element {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            display: block;
-            transition: opacity 0.5s ease;
-        }
-
-        #liveVideo {
-            display: none;
-        }
-
-        /* TRACK METADATA */
-        .track-meta {
-            text-align: center;
-        }
-
-        .app-title {
-            font-size: 1.35rem;
-            font-weight: 700;
-            letter-spacing: -0.01em;
-            margin-bottom: 0.25rem;
-            color: var(--text-primary);
-        }
-
-        .app-sub {
-            font-size: 0.85rem;
-            color: var(--accent-gold);
-            font-weight: 500;
-        }
-
-        /* STATUS BAR */
-        .status-container {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            background: rgba(0, 0, 0, 0.3);
-            padding: 0.75rem 1.15rem;
-            border-radius: 18px;
-            border: 1px solid rgba(255, 255, 255, 0.05);
-        }
-
-        .status-badge {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            font-size: 0.75rem;
-            font-weight: 700;
-            letter-spacing: 0.05em;
-        }
-
-        .dot-live {
-            width: 9px;
-            height: 9px;
-            border-radius: 50%;
-            background-color: #64748b;
-            transition: all 0.3s ease;
-        }
-
-        .dot-live.active {
-            background-color: var(--accent-emerald);
-            box-shadow: 0 0 10px var(--accent-emerald);
-            animation: blink 1.5s infinite;
-        }
-
-        @keyframes blink {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.3; }
-        }
-
-        .stream-time {
-            font-size: 0.85rem;
-            font-weight: 600;
-            font-family: monospace;
-            color: var(--text-secondary);
-        }
-
-        .speed-badge {
-            font-size: 0.75rem;
-            background: rgba(234, 179, 8, 0.15);
-            border: 1px solid rgba(234, 179, 8, 0.3);
-            padding: 0.2rem 0.55rem;
-            border-radius: 8px;
-            color: var(--accent-gold);
-            font-weight: 700;
-        }
-
-        /* CONTROLS */
-        .controls {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 1.5rem;
-        }
-
-        .btn-control-sub {
-            width: 52px;
-            height: 52px;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.04);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            color: var(--text-primary);
-            font-size: 1.4rem;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.2s ease;
-        }
-
-        .btn-control-sub:active {
-            transform: scale(0.92);
-        }
-
-        .btn-play {
-            width: 74px;
-            height: 74px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, var(--accent-emerald), #059669);
-            border: none;
-            color: #ffffff;
-            font-size: 2.4rem;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 10px 25px rgba(16, 185, 129, 0.35);
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        .btn-play:hover {
-            transform: scale(1.05);
-        }
-
-        .btn-play:active {
+        .btn-ctrl:active {
+            box-shadow: inset 4px 4px 8px #14161c, inset -4px -4px 8px #323848;
             transform: scale(0.95);
+            color: #ff5722;
         }
 
-        .btn-play.playing {
-            background: linear-gradient(135deg, var(--accent-gold), #d97706);
-            color: #000000;
-            box-shadow: 0 10px 25px var(--accent-gold-glow);
+        /* Tombol Play Utama */
+        .btn-ctrl.btn-play {
+            width: 64px;
+            height: 64px;
+            font-size: 26px;
+            color: #ff5722;
         }
 
-        .btn-hint {
-            font-size: 0.68rem;
-            color: var(--text-secondary);
-            text-align: center;
-            margin-top: -0.25rem;
-            opacity: 0.8;
+        /* Dropdown Kecepatan Pemutaran */
+        .speed-select {
+            background: #232732;
+            border: none;
+            outline: none;
+            color: #ff5722;
+            font-size: 12px;
+            font-weight: bold;
+            padding: 8px 12px;
+            border-radius: 15px;
+            box-shadow: 4px 4px 8px #14161c, -4px -4px 8px #323848;
+            cursor: pointer;
         }
 
-        /* =========================================================
-           RESPONSIVE LANDSCAPE LAYOUT (DESKTOP / ROTATED DEVICES)
-           ========================================================= */
-        @media (orientation: landscape) and (min-height: 480px), (min-width: 850px) {
-            body {
-                padding: 2rem;
+        .speed-select option {
+            background: #232732;
+            color: #fff;
+        }
+
+        /* Responsivitas Mobile */
+        @media screen and (max-width: 480px) {
+            .player-container {
+                padding: 24px 20px;
+                border-radius: 30px;
             }
 
-            .player-card {
-                max-width: 820px;
-                display: grid;
-                grid-template-columns: 300px 1fr;
-                gap: 2rem;
-                align-items: center;
-                padding: 2.25rem;
-            }
-
-            .left-panel {
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                justify-content: center;
-            }
-
-            .right-panel {
-                display: flex;
-                flex-direction: column;
-                gap: 1.25rem;
-            }
-
-            .media-wrapper {
-                max-width: 280px;
-                margin: 0;
-            }
-
-            .track-meta {
-                text-align: left;
-            }
-
-            .btn-hint {
-                text-align: left;
+            .media-display {
+                width: 170px;
+                height: 170px;
             }
         }
     </style>
 </head>
 <body>
+    <div class="background"></div>
 
-    <div class="player-card">
-        <!-- Panel Kiri (Media Display pada Landscape, Atas pada Portrait) -->
-        <div class="left-panel">
-            <div id="albumArt" class="media-wrapper">
-                <!-- Logo Statis (Muncul saat Audio Diam/Pause) -->
-                <img id="staticLogo" src="logo.png" alt="Logo Ngaos Al Falah Ploso" class="media-element">
-                
-                <!-- Video Visualizer (Muncul & Play saat Audio Berjalan) -->
-                <video id="liveVideo" class="media-element" loop muted playsinline preload="auto">
-                    <source src="visualizer.mp4" type="video/mp4">
-                    Browser Anda tidak mendukung tag video.
-                </video>
+    <div class="player-container">
+        <!-- Top Bar Status -->
+        <div class="top-bar">
+            <div class="live-badge">
+                <div class="live-dot"></div>
+                <span>ON AIR</span>
+            </div>
+            <div class="user-status">
+                <i class='bx bxs-user-check'></i>
+                <span>Terverifikasi</span>
             </div>
         </div>
 
-        <!-- Panel Kanan (Informasi & Kontrol) -->
-        <div class="right-panel">
-            <!-- Header Bar -->
-            <div class="top-bar">
-                <div class="user-info">
-                    <div class="avatar-icon"><i class="bx bx-user"></i></div>
-                    <span id="userDisplay" class="username">Guest User</span>
-                </div>
-                <button id="btnLogout" class="btn-icon" title="Keluar">
-                    <i class="bx bx-log-out"></i>
-                </button>
-            </div>
-
-            <!-- Metadata Info -->
-            <div class="track-meta">
-                <h1 id="appTitle" class="app-title">Ngaos Al Falah Ploso</h1>
-                <p id="appSub" class="app-sub">Tafsir Jalalain & Shahih Bukhari</p>
-            </div>
-
-            <!-- Status Indicator -->
-            <div class="status-container">
-                <div class="status-badge">
-                    <div id="dotLive" class="dot-live"></div>
-                    <span id="statusIndicator">OFFLINE</span>
-                </div>
-                <span id="speedDisplay" class="speed-badge">1.0x</span>
-                <span id="streamTime" class="stream-time">0:00</span>
-            </div>
-
-            <!-- Controls -->
-            <div class="controls">
-                <button id="btnRewind" class="btn-control-sub" title="Klik: Reset Speed | Tahan: Rewind 30s">
-                    <i class="bx bx-rewind"></i>
-                </button>
-
-                <button id="playBtn" class="btn-play">
-                    <i id="playIcon" class="bx bx-play"></i>
-                </button>
-
-                <button id="btnForward" class="btn-control-sub" title="Klik: Ganti Speed | Tahan: Catch-up Live">
-                    <i class="bx bx-fast-forward"></i>
-                </button>
-            </div>
-            <p class="btn-hint">Klik tombol samping untuk Kecepatan | Tahan untuk Replay/Live Sync</p>
+        <!-- Visual Display (Logo Statis / Video Loop 15s) -->
+        <div class="media-display">
+            <!-- Logo Statis (Tampil saat Pause) -->
+            <img id="playerLogo" class="media-content" src="logo.png" alt="Logo Ngaos Al Falah Ploso">
+            
+            <!-- Video Loop 15 Detik (Tampil saat Play) -->
+            <video id="playerVideo" class="media-content hidden" loop muted playsinline>
+                <source src="video-loop.mp4" type="video/mp4">
+            </video>
         </div>
+
+        <!-- Info Siaran -->
+        <div class="track-info">
+            <h1>Ngaos Al Falah Ploso</h1>
+            <p class="subtitle">Streaming Audio Pengajian Live</p>
+        </div>
+
+        <!-- Progress Bar & Durasi -->
+        <div class="progress-area">
+            <div class="progress-bar-container" id="progressContainer">
+                <div class="progress-bar" id="progressBar"></div>
+            </div>
+            <div class="time-stamps">
+                <span id="currentTime">00:00</span>
+                <span id="duration">00:00</span>
+            </div>
+        </div>
+
+        <!-- Kontrol Utama Player -->
+        <div class="controls-row">
+            <!-- Speed Selector -->
+            <select id="speedSelect" class="speed-select" title="Kecepatan Pemutaran">
+                <option value="0.75">0.75x</option>
+                <option value="1" selected>1.0x</option>
+                <option value="1.25">1.25x</option>
+                <option value="1.5">1.5x</option>
+            </select>
+
+            <!-- Rewind Button (Hold Support) -->
+            <button class="btn-ctrl" id="btnRewind" title="Mundur 10 detik">
+                <i class='bx bx-rewind'></i>
+            </button>
+
+            <!-- Play / Pause Button -->
+            <button class="btn-ctrl btn-play" id="btnPlay" title="Putar / Hentikan">
+                <i class='bx bx-play' id="playIcon"></i>
+            </button>
+
+            <!-- Fast Forward Button (Hold Support) -->
+            <button class="btn-ctrl" id="btnFF" title="Maju 10 detik">
+                <i class='bx bx-fast-forward'></i>
+            </button>
+        </div>
+
+        <!-- Audio Element Hidden -->
+        <audio id="audioStream" src="audio-sample.mp3" preload="metadata"></audio>
     </div>
 
-    <!-- Script Utama Player -->
+    <!-- Script pemutaran terpisah -->
     <script src="player.js"></script>
 </body>
 </html>
